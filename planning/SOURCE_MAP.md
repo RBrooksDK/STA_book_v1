@@ -53,6 +53,9 @@ Ross is a scope and verification source. Do not copy its prose, figures, example
 - **Ross check:** 1.2–1.4 and 2.1–2.3
 - **Core:** populations and samples; data types; summaries; sample versus population variance; histograms, boxplots, scatterplots, shape and outliers
 - **New work:** a coherent engineering dataset from import to interpretation; boxplots must appear here, not first in ANOVA
+- **Draft status:** complete first textbook draft, including reproducible Python figures, worked sensor-thickness analysis, data-quality guidance, and exercises
+- **Editorial departures from MSE Chapter 6:** preserves definitions and notation, but moves boxplots into the core exploratory workflow; defers the normal model, empirical rule, and Law of Large Numbers to Chapters 4–5; omits ogives, the computational variance shortcut, coefficient of variation, and kurtosis from STA1 core
+- **Verification record:** all displayed dataset values are calculated from `data/sensor_thickness.csv`; sample spread uses `ddof=1`; the two 1.5-IQR flags are observations 162 and 165
 
 ### Chapter 2 — Probability for Data Analysis
 

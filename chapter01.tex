@@ -1,19 +1,435 @@
 \chapter{Data and Descriptive Statistics}
 \label{ch:descriptive-statistics}
 
+Engineering decisions often begin with a simple question: what does the data actually say? A production engineer may have hundreds of thickness measurements, a software engineer may have thousands of response times, and a test engineer may have counts of several defect types. Raw observations are rarely useful on their own. They must be organised, summarised, visualised, and interpreted in their engineering context.
+
+This chapter develops that first analysis. Its definitions and notation follow the descriptive-statistics treatment in \emph{Mathematics for Software Engineering}, while the workflow is adapted to STA1: we begin with an engineering dataset, use Python throughout, and separate descriptive evidence from inferential conclusions. Formal probability models and statistical inference come later.
+
 \section{Engineering question and learning outcomes}
-How can measurements be summarised without hiding important variation?
 
-\section{Populations, samples, and data types}
+Our running example concerns the thickness of manufactured plates. A nominal value near $250\,\mu\text{m}$ is expected, and measurements have been collected from two production lines. We want to answer:
 
-\section{Numerical summaries}
+\begin{quote}
+How can the measurements be summarised without hiding important variation, unusual observations, or differences in the data-collection process?
+\end{quote}
+
+After studying this chapter, you should be able to:
+
+\begin{itemize}
+    \item distinguish populations, samples, parameters, and statistics;
+    \item classify variables and choose appropriate summaries and plots;
+    \item compute and interpret measures of centre, position, and spread;
+    \item explain why sample variance uses the divisor $n-1$;
+    \item describe shape using symmetry, skewness, and modality;
+    \item use the $1.5\times IQR$ rule to flag observations for investigation;
+    \item create and interpret frequency tables, histograms, boxplots, and scatterplots in Python; and
+    \item state an engineering conclusion that respects the limits of descriptive analysis.
+\end{itemize}
+
+\section{Populations, samples, and variables}
+
+\begin{definition}[Population]
+A \textbf{population} is the complete set of observations or units relevant to a stated question.
+\end{definition}
+
+The population is determined by the question, not merely by what happens to be in a file. For the plate example, it might be all plates produced by the process during a specified month. Changing the time period, production line, or operating conditions changes the population.
+
+\begin{definition}[Sample]
+A \textbf{sample} is the subset of the population that is actually observed.
+\end{definition}
+
+The file used in this chapter contains a sample of $n=180$ plates. A large sample is not automatically representative: measurements taken only during one shift, for example, may systematically miss other operating conditions.
+
+\begin{definition}[Parameter and statistic]
+A \textbf{parameter} is a numerical characteristic of a population. A \textbf{statistic} is a numerical characteristic calculated from a sample.
+\end{definition}
+
+We use Greek letters for population quantities and Latin letters for observed sample quantities. The population mean and standard deviation are denoted by $\mu$ and $\sigma$; their sample counterparts are $\bar{x}$ and $s$. A statistic describes the observed sample exactly, but it generally estimates an unknown population parameter.
+
+\begin{example}[Thickness study]
+Suppose the population is all plates produced under the current process settings. Its mean thickness $\mu$ is a parameter. The mean of the 180 recorded measurements, $\bar{x}=250.83\,\mu\text{m}$, is a statistic. The statistic is known once the file has been read; the population parameter remains unknown.
+\end{example}
+
+\subsection*{Observational units and variables}
+
+An \textbf{observational unit} is the item on which measurements are recorded. Each row in the plate dataset represents one plate. A \textbf{variable} is a recorded characteristic of that unit, represented by a column.
+
+\begin{definition}[Categorical and quantitative data]
+\textbf{Categorical data} place observations into groups or categories. \textbf{Quantitative data} are numerical counts or measurements for which arithmetic has a meaningful interpretation.
+\end{definition}
+
+Quantitative variables are often divided into two types:
+
+\begin{itemize}
+    \item A \textbf{discrete} variable takes countable values, such as the number of defects on a plate.
+    \item A \textbf{continuous} variable is measured on a scale and may, in principle, take any value in an interval, such as thickness or response time.
+\end{itemize}
+
+Categorical variables may be \textbf{nominal}, with no inherent order, or \textbf{ordinal}, with an ordered set of categories. Production line is nominal; a severity rating such as low, medium, and high is ordinal. A numerical code does not turn a category into a quantitative measurement.
+
+\begin{table}[htbp]
+\centering
+\renewcommand{\arraystretch}{1.2}
+\begin{tabularx}{\textwidth}{lllX}
+\toprule
+\textbf{Variable} & \textbf{Role} & \textbf{Type} & \textbf{Meaning} \\
+\midrule
+\texttt{sample\_id} & identifier & categorical label & identifies the measured plate \\
+\texttt{line} & explanatory/grouping & nominal & production line A or B \\
+\texttt{thickness\_um} & response & continuous & measured thickness in $\mu\text{m}$ \\
+\bottomrule
+\end{tabularx}
+\caption{Variables used in the Chapter 1 analysis. An identifier should not be averaged merely because it is stored as a number.}
+\label{tab:ch1-variables}
+\end{table}
+
+Before calculating anything, check the observational unit, column meanings, units, missing values, impossible values, duplicates, and how the sample was obtained. Statistical software cannot repair an ambiguous data-generating process.
+
+\section{Organising categorical and numerical data}
+
+For a categorical or discrete variable, a frequency table is usually a natural first summary.
+
+\begin{definition}[Frequency distribution]
+A \textbf{frequency distribution} reports how often each category, value, or interval occurs. The \textbf{absolute frequency} is the count, the \textbf{relative frequency} is the count divided by the total number of observations, and the \textbf{cumulative relative frequency} is the running total in an ordered distribution.
+\end{definition}
+
+There are 90 observations from each production line, so each line has relative frequency $90/180=0.50$. Counts or bar charts are appropriate for production line. A histogram is not: the values A and B are categories, not intervals on a numerical scale.
+
+For a continuous variable with many distinct values, we group observations into intervals called \textbf{bins}. A histogram places adjacent bars over the bins. The height represents a frequency, relative frequency, or density. Unlike a bar chart, the horizontal position and adjacency of histogram bars encode a numerical scale.
+
+The appearance of a histogram depends on its bin boundaries and widths. Too few bins can hide structure; too many can exaggerate random fluctuation. Therefore, inspect more than one reasonable binning and do not treat a single histogram as an objective image of the population.
+
+\section{Measures of centre}
+
+No single number captures an entire distribution, but measures of centre help describe a typical observation.
+
+\begin{definition}[Sample mean]
+For observations $x_1,x_2,\ldots,x_n$, the \textbf{sample mean} is
+\[
+    \bar{x}=\frac{1}{n}\sum_{i=1}^{n}x_i.
+\]
+\end{definition}
+
+The mean uses every observation and is the balance point of the data. Consequently, an unusually large or small value can move it substantially.
+
+\begin{definition}[Median]
+After arranging the observations from smallest to largest, the \textbf{median} is the middle observation when $n$ is odd and the mean of the two middle observations when $n$ is even.
+\end{definition}
+
+The median is resistant to extreme observations: changing the largest value usually does not change which observations occupy the middle positions. It is often preferable to the mean for strongly skewed data, but reporting both is informative.
+
+\begin{definition}[Mode]
+The \textbf{mode} is a value or category with the highest frequency. A dataset can have no unique mode or can have several modes.
+\end{definition}
+
+The mode is particularly useful for categorical data. For continuous measurements, exact repeated values depend on measurement precision, so a modal interval from a histogram is often more meaningful than an exact mode.
+
+\begin{example}[Mean and median under an extreme value]
+For the five values $8,9,10,11,12$, both the mean and median equal 10. If 12 is replaced by 52, the mean becomes 18 while the median remains 10. The mean reveals the effect of the extreme value; the median describes the centre of the majority. Neither value should be reported without context.
+\end{example}
+
+\section{Measures of spread and position}
+
+Two processes can have the same mean and very different consistency. Measures of spread quantify this variation.
+
+\begin{definition}[Range]
+The \textbf{range} is
+\[
+    x_{\max}-x_{\min}.
+\]
+\end{definition}
+
+The range is easy to interpret but depends entirely on two observations and usually grows as the sample size grows.
+
+\begin{definition}[Sample variance and sample standard deviation]
+The \textbf{sample variance} and \textbf{sample standard deviation} are
+\[
+    s^2=\frac{1}{n-1}\sum_{i=1}^{n}(x_i-\bar{x})^2,
+    \qquad
+    s=\sqrt{s^2}.
+\]
+\end{definition}
+
+Each deviation $x_i-\bar{x}$ measures displacement from the sample mean. Squaring makes negative and positive deviations contribute positively and gives large deviations greater weight. Variance is expressed in squared units; standard deviation returns to the original unit and is therefore easier to interpret.
+
+\subsection*{Why $n-1$?}
+
+Once $n-1$ deviations from $\bar{x}$ are known, the final deviation is fixed because
+\[
+    \sum_{i=1}^{n}(x_i-\bar{x})=0.
+\]
+Only $n-1$ deviations are free to vary. Dividing the squared deviations by $n-1$, rather than $n$, also makes $s^2$ an unbiased estimator of the population variance $\sigma^2$ under random sampling. This correction is important in later inference.
+
+Pandas uses $n-1$ for sample variance and standard deviation by default. NumPy uses $n$ by default, so in this book we write \texttt{ddof=1} explicitly:
+
+\begin{python}
+s_pandas = df["thickness_um"].std()
+s_numpy = np.std(df["thickness_um"], ddof=1)
+\end{python}
+
+If a dataset is the entire population of interest and the aim is only to describe that finite population, division by $n$ may be appropriate. State the convention and the population clearly.
+
+\subsection*{Percentiles, quartiles, and IQR}
+
+\begin{definition}[Percentile]
+The $p$-th \textbf{percentile} is a value at or below which approximately $p\%$ of the observations fall.
+\end{definition}
+
+Software packages use several interpolation conventions, which can produce slightly different percentiles in small samples. Record the convention when exact reproducibility matters.
+
+\begin{definition}[Quartiles and interquartile range]
+The first quartile $Q_1$, median $Q_2$, and third quartile $Q_3$ are the 25th, 50th, and 75th percentiles. The \textbf{interquartile range} is
+\[
+    IQR=Q_3-Q_1.
+\]
+It measures the spread of the middle 50\% of the observations.
+\end{definition}
+
+Like the median, the IQR is resistant to extreme values. The pair median--IQR is therefore a useful summary for skewed data, while mean--standard deviation is most informative for reasonably symmetric data without influential extremes.
 
 \section{Visualising distributions and relationships}
 
+A numerical summary should normally be accompanied by a plot. Different plots reveal different features.
+
+\subsection*{Histogram and distribution shape}
+
+A histogram can reveal centre, spread, gaps, clusters, and shape. Useful descriptive terms include:
+
+\begin{itemize}
+    \item \textbf{symmetric}: the two sides are approximately mirror images;
+    \item \textbf{right-skewed}: a longer tail extends toward larger values;
+    \item \textbf{left-skewed}: a longer tail extends toward smaller values;
+    \item \textbf{unimodal}: one prominent peak; and
+    \item \textbf{multimodal}: two or more prominent peaks, possibly indicating mixed groups or operating states.
+\end{itemize}
+
+In many unimodal skewed datasets, the mean is pulled toward the longer tail. Thus, $\bar{x}$ is often larger than the median under right skew and smaller under left skew. This is a useful pattern, not a definition or universal rule.
+
+\subsection*{Outlier flags and boxplots}
+
+An observation is not an error merely because it is unusual. It may be a recording mistake, a genuine rare event, a process change, or the most important observation in the dataset. A rule should flag values for investigation rather than delete them automatically.
+
+\begin{definition}[$1.5\times IQR$ outlier rule]
+Define the lower and upper fences by
+\[
+    L=Q_1-1.5\,IQR,
+    \qquad
+    U=Q_3+1.5\,IQR.
+\]
+Observations below $L$ or above $U$ are flagged as potential outliers.
+\end{definition}
+
+A boxplot displays the box from $Q_1$ to $Q_3$, a line at the median, and whiskers extending to the most extreme observations within the fences. Points outside the whiskers are drawn separately. Some software uses other whisker conventions, so check the documentation when exact interpretation matters.
+
+Boxplots are excellent for comparing groups on a common scale. They do not show every feature: two distributions with different modality can have similar boxplots, and a short box does not imply that the process meets an engineering tolerance.
+
+\subsection*{Scatterplots and ordered measurements}
+
+A scatterplot displays pairs $(x_i,y_i)$ and can reveal direction, form, strength, groups, and unusual points in a relationship between two quantitative variables. Association does not by itself establish causation.
+
+Plotting a measurement against collection order is also useful. In that case, order is not treated as an ordinary explanatory measurement; the plot is a diagnostic for drift, jumps, cycles, or changing variation. A stable histogram can conceal a change over time, which is why the collection order should be preserved whenever possible.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.92\textwidth]{figure/chapter01_distribution.pdf}
+    \caption{Distribution of the 180 plate-thickness measurements. The histogram shows overall shape, while the boxplot compactly displays quartiles and potential outliers.}
+    \label{fig:ch1-distribution}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.92\textwidth]{figure/chapter01_order.pdf}
+    \caption{Thickness in collection order, coloured by production line. Ordered data can reveal structure that is hidden by a single aggregate distribution.}
+    \label{fig:ch1-order}
+\end{figure}
+
 \section{Worked engineering example}
+
+The file \texttt{sensor\_thickness.csv} contains 180 measurements in micrometres. The dataset is synthetic and reproducible, generated with NumPy's \texttt{default\_rng(2026)} for teaching. Table~\ref{tab:ch1-summary} reports the principal summaries.
+
+\begin{table}[htbp]
+\centering
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{lr}
+\toprule
+\textbf{Statistic} & \textbf{Thickness ($\mu\text{m}$)} \\
+\midrule
+Count $n$ & 180 \\
+Mean $\bar{x}$ & 250.830 \\
+Median & 250.577 \\
+Sample standard deviation $s$ & 4.809 \\
+Sample variance $s^2$ & 23.129 \\
+Minimum & 239.668 \\
+$Q_1$ & 247.337 \\
+$Q_3$ & 253.974 \\
+Maximum & 265.756 \\
+IQR & 6.638 \\
+\bottomrule
+\end{tabular}
+\caption{Descriptive summary of all plate-thickness measurements. Values are computed from the distributed CSV file; rounding occurs only for display.}
+\label{tab:ch1-summary}
+\end{table}
+
+The IQR fences are
+\[
+    L=247.33675-1.5(6.63750)=237.3805,
+\]
+\[
+    U=253.97425+1.5(6.63750)=263.9305.
+\]
+Two measurements, $265.756\,\mu\text{m}$ and $264.687\,\mu\text{m}$, exceed the upper fence. They should be checked against measurement records and process conditions; the descriptive rule does not justify deleting them.
+
+The mean is slightly above the median, and the upper flagged observations contribute to a modest right tail. The overall sample standard deviation is about $4.81\,\mu\text{m}$. In collection order, the later measurements on line B tend to be higher. This observation is a prompt for investigation, not yet evidence that one line or period has a different population mean. Such a claim requires a suitable design and inferential method.
+
+This distinction is central:
+
+\begin{quote}
+The sample shows what was observed. It does not, by itself, establish what will happen in the population or why the pattern occurred.
+\end{quote}
 
 \section{Python in practice}
 
+The following workflow is deliberately explicit. It keeps units, data checks, numerical summaries, plots, and interpretation together.
+
+\subsection*{Import and audit}
+
+\begin{python}
+from pathlib import Path
+
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+
+DATA = Path("data")
+df = pd.read_csv(DATA / "sensor_thickness.csv")
+
+print(df.head())
+print(df.info())
+print(df.isna().sum())
+print(df.duplicated(subset="sample_id").sum())
+\end{python}
+
+For this file, each row is one plate, \texttt{sample\_id} is unique, and \texttt{thickness\_um} is the analysis variable. Keep the unit $\mu\text{m}$ in plot labels and reported conclusions.
+
+\subsection*{Compute summaries explicitly}
+
+\begin{python}
+x = df["thickness_um"]
+
+summary = {
+    "n": x.count(),
+    "mean": x.mean(),
+    "median": x.median(),
+    "sample_variance": x.var(ddof=1),
+    "sample_sd": x.std(ddof=1),
+    "minimum": x.min(),
+    "maximum": x.max(),
+}
+
+q1, q3 = x.quantile([0.25, 0.75])
+iqr = q3 - q1
+lower = q1 - 1.5 * iqr
+upper = q3 + 1.5 * iqr
+flagged = df.loc[(x < lower) | (x > upper)]
+
+print(pd.Series(summary))
+print(f"Q1={q1:.3f}, Q3={q3:.3f}, IQR={iqr:.3f}")
+print(flagged[["sample_id", "line", "thickness_um"]])
+\end{python}
+
+The call \texttt{x.describe()} is a convenient check, but explicit calculations make the conventions visible. In particular, \texttt{ddof=1} documents that $s$, not the population standard deviation, is intended.
+
+\subsection*{Plot the distribution and collection order}
+
+\begin{python}
+fig, axes = plt.subplots(2, 1, figsize=(8, 6),
+                         gridspec_kw={"height_ratios": [3, 1]})
+
+axes[0].hist(x, bins="fd", color="#6ca2c6", edgecolor="white")
+axes[0].set(xlabel="Thickness (micrometres)", ylabel="Count")
+
+axes[1].boxplot(x, vert=False)
+axes[1].set_xlabel("Thickness (micrometres)")
+
+fig.tight_layout()
+plt.show()
+\end{python}
+
+\begin{python}
+fig, ax = plt.subplots(figsize=(8, 4))
+for line, group in df.groupby("line"):
+    ax.scatter(group["sample_id"], group["thickness_um"],
+               label=f"Line {line}", s=24, alpha=0.8)
+
+ax.set(xlabel="Collection order (sample ID)",
+       ylabel="Thickness (micrometres)")
+ax.legend()
+fig.tight_layout()
+plt.show()
+\end{python}
+
+End the analysis in ordinary language. For example:
+
+\begin{quote}
+The 180 recorded plates have a mean thickness of $250.83\,\mu\text{m}$ and a sample standard deviation of $4.81\,\mu\text{m}$. The distribution is broadly concentrated around $250\,\mu\text{m}$, but the IQR rule flags two high measurements and the ordered plot suggests higher later values on line B. The measurement records and sampling process should be checked before drawing a process-wide conclusion.
+\end{quote}
+
 \section{Common pitfalls and chapter summary}
 
+\subsection*{Common pitfalls}
+
+\begin{itemize}
+    \item \textbf{Confusing population and sample.} Describe precisely which units the conclusion concerns.
+    \item \textbf{Treating identifiers as measurements.} A numerical sample ID is still a label.
+    \item \textbf{Reporting only the mean.} Pair centre with spread and a plot.
+    \item \textbf{Using NumPy's default variance unintentionally.} Set \texttt{ddof=1} for $s^2$ and $s$.
+    \item \textbf{Calling every flagged value an error.} Investigate before correcting or excluding it.
+    \item \textbf{Ignoring collection order or groups.} Aggregation can hide process changes.
+    \item \textbf{Inferring from a graph alone.} A visible sample difference is descriptive evidence, not a completed hypothesis test.
+    \item \textbf{Omitting units.} A value such as $4.81$ is incomplete without $\mu\text{m}$.
+\end{itemize}
+
+\subsection*{Chapter summary}
+
+Descriptive statistics organises and communicates observed data. The mean, median, and mode describe centre; the range, variance, standard deviation, and IQR describe spread; and quartiles describe position. Histograms show distribution shape, boxplots compactly show centre, spread, and flagged observations, and scatterplots or ordered plots reveal relationships and process structure. These tools help formulate better questions, but they do not replace probability models, sampling arguments, or statistical inference.
+
 \section{Exercises}
+
+\begin{enumerate}
+    \item For each variable below, identify the observational unit and classify the variable as nominal, ordinal, discrete quantitative, or continuous quantitative:
+    \begin{enumerate}
+        \item component lifetime in hours;
+        \item defect severity (minor, major, critical);
+        \item number of failed tests in a build;
+        \item server region; and
+        \item request latency in milliseconds.
+    \end{enumerate}
+
+    \item A team records response times $42,45,47,48,53,55,110$ ms.
+    \begin{enumerate}
+        \item Compute the mean and median.
+        \item Explain which measure better describes a typical request and what information the other measure retains.
+        \item Compute the range and sample standard deviation using Python with \texttt{ddof=1}.
+    \end{enumerate}
+
+    \item Use \texttt{sensor\_thickness.csv}.
+    \begin{enumerate}
+        \item Reproduce Table~\ref{tab:ch1-summary} without rounding intermediate calculations.
+        \item Verify that Pandas and NumPy agree on the sample standard deviation when \texttt{ddof=1} is used.
+        \item Compare the result with NumPy's default. Explain the difference.
+    \end{enumerate}
+
+    \item Construct histograms with 5, 10, 20, and Freedman--Diaconis bins. Which features are stable across the choices, and which depend on the binning? Include units on both axes where relevant.
+
+    \item Compute the IQR fences and list the flagged plate measurements. For each plausible cause below---recording error, rare valid plate, calibration problem, or process shift---state what additional evidence you would seek.
+
+    \item Produce side-by-side boxplots of thickness for lines A and B, together with a table containing $n$, mean, median, and sample standard deviation for each line. Write a descriptive conclusion that does not make an inferential claim.
+
+    \item Plot thickness against collection order. Compare what this plot reveals with what is visible in the aggregate histogram. Why should collection order normally be retained?
+
+    \item Create a deliberately misleading plot of the thickness data by removing units or choosing a distorted axis. Then correct it and explain why the revised version is more responsible.
+
+    \item Write a short data-quality note for the dataset. Address provenance, synthetic-data status, missingness, duplicates, units, sampling limitations, and any variables that should not be treated as ordinary predictors in an initial analysis.
+
+    \item An engineer says: ``Line B has a larger sample mean, so line B produces thicker plates.'' Explain precisely what the data establishes and what would be required to support the process-wide claim.
+\end{enumerate}

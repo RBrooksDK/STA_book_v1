@@ -39,8 +39,10 @@ before every release commit that changes book content.
 
 ## Status
 
-The repository is at the structural-scaffold stage. Chapter content is being
-developed and reviewed in four waves: 1–3, 4–6, 7–9, and 10–12.
+Chapter 1, *Data and Descriptive Statistics*, is complete as a first reviewed
+draft. It includes a reproducible engineering dataset, Python figures, a
+worked analysis, and exercises. The remaining chapters are being developed
+and reviewed in four waves: 1–3, 4–6, 7–9, and 10–12.
 
 ## Author
 
