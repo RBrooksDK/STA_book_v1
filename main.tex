@@ -1,0 +1,129 @@
+\documentclass[fleqn,11pt,color=blue]{elegantbook}
+
+\usepackage{parskip}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{mathtools}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{tikz}
+\usepackage{pgfplots}
+\usepackage{placeins}
+\usepackage{mymacro}
+
+\pgfplotsset{compat=1.18}
+\input{stacolors}
+
+\title{Statistics and Data Analysis for Engineers}
+\subtitle{A Practical, Python-Oriented Introduction}
+\author{Richard Brooks}
+\institute{VIA University College}
+\date{2026}
+\version{0.1}
+
+\definecolor{customcolor}{RGB}{108,162,198}
+\colorlet{coverlinecolor}{customcolor}
+
+% Original vector cover using the same visual language as the STA1 site.
+\makeatletter
+\renewcommand*{\maketitle}{%
+  \hypersetup{pageanchor=false}%
+  \pagenumbering{Alph}%
+  \begin{titlepage}
+    \thispagestyle{empty}
+    \begin{tikzpicture}[remember picture,overlay]
+      \fill[white] (current page.south west) rectangle (current page.north east);
+      \fill[staViaBlue] (current page.north west)
+        rectangle ([yshift=-10.2cm]current page.north east);
+      \fill[staViaBlue!10] ([yshift=-10.2cm]current page.north west)
+        rectangle (current page.south east);
+
+      \node[anchor=north west,text=white,text width=16cm,align=left]
+        at ([xshift=1.7cm,yshift=-1.5cm]current page.north west)
+        {\fontsize{30}{35}\selectfont\bfseries Statistics and Data\\Analysis for Engineers};
+      \node[anchor=north west,text=white!90]
+        at ([xshift=1.75cm,yshift=-4.7cm]current page.north west)
+        {\Large A Practical, Python-Oriented Introduction};
+
+      \begin{scope}[shift={([xshift=2.2cm,yshift=-8.9cm]current page.north west)}]
+        \draw[white!75,line width=0.8pt] (0,0) -- (14.5,0);
+        \foreach \x/\h in {0.5/1.0,1.5/1.8,2.5/2.8,3.5/3.5,4.5/3.0,5.5/2.2,6.5/1.4}
+          \fill[white!38] (\x,0) rectangle +(0.82,\h);
+        \draw[staOrange,line width=1.8pt]
+          plot[smooth] coordinates {(7.4,0.5) (8.3,1.2) (9.2,2.0) (10.2,2.7) (11.1,3.2) (12.1,4.0) (13.2,4.6)};
+        \foreach \x/\y in {7.6/0.9,8.1/1.6,8.8/1.4,9.4/2.5,10.0/2.2,10.6/3.3,11.2/2.9,11.8/4.2,12.4/3.7,13.0/4.9}
+          \fill[white] (\x,\y) circle (2.2pt);
+      \end{scope}
+
+      \node[anchor=north west,text=staDarkText]
+        at ([xshift=1.75cm,yshift=-12.2cm]current page.north west)
+        {\Large\bfseries Richard Brooks};
+      \node[anchor=north west,text=staDarkText!75]
+        at ([xshift=1.75cm,yshift=-13.2cm]current page.north west)
+        {\large VIA University College};
+      \node[anchor=south west,text=staDarkText!65]
+        at ([xshift=1.75cm,yshift=1.5cm]current page.south west)
+        {2026 \hspace{1.5em} Version 0.1};
+    \end{tikzpicture}
+    \null
+  \end{titlepage}
+  \hypersetup{pageanchor=true}%
+}
+\makeatother
+
+\lstdefinestyle{pythonStyle}{
+  language=Python,
+  basicstyle=\ttfamily\small,
+  keywordstyle=\color{blue}\bfseries,
+  commentstyle=\color{gray},
+  stringstyle=\color{red!70!black},
+  numbers=left,
+  numberstyle=\tiny\color{gray},
+  numbersep=6pt,
+  showstringspaces=false,
+  frame=single,
+  breaklines=true,
+  columns=fullflexible
+}
+
+\lstnewenvironment{python}[1][]
+  {\lstset{style=pythonStyle,#1}}
+  {}
+
+\addbibresource{reference.bib}
+\DeclareLanguageMapping{english}{english-apa}
+
+\begin{document}
+
+\maketitle
+\frontmatter
+\tableofcontents
+
+\mainmatter
+
+\part{Data and Probability Models}
+\input{chapter01}
+\input{chapter02}
+\input{chapter03}
+\input{chapter04}
+
+\part{Sampling and Statistical Inference}
+\input{chapter05}
+\input{chapter06}
+\input{chapter07}
+\input{chapter08}
+\input{chapter09}
+
+\part{Modelling and Integrated Analysis}
+\input{chapter10}
+\input{chapter11}
+\input{chapter12}
+
+\nocite{*}
+\printbibliography[heading=bibintoc,title=References]
+
+\appendix
+\input{appendixA}
+
+\end{document}
