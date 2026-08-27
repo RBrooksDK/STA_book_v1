@@ -4,8 +4,8 @@
 
 This contract maintains a **one-to-one alignment** between the twelve taught
 STA1 sessions, the twelve numbered chapters of *Statistics and Data Analysis
-for Engineers*, and the corresponding Python tutorials.  Session 00 is an
-orientation session and maps to Appendix A rather than a numbered chapter.
+for Engineers*, and the corresponding Python tutorials. Session 00 is an
+orientation session on the website and is not part of the theory textbook.
 
 The contract is a planning and review document.  It does not itself change the
 published course content.  When the book, website, tutorial, assignment, or
@@ -16,28 +16,34 @@ entry before publication.
 
 Every numbered chapter must contain the following, scaled to the topic:
 
-1. **Engineering question and motivation** — one question that a practitioner
-   could recognise.
-2. **Learning outcomes** — phrased as observable abilities and matched to the
-   session.
-3. **Core concepts** — definitions, notation, and only the results needed for
+1. **Theory-oriented introduction and motivation** — a continuous introduction
+   that establishes why the topic matters and previews its conceptual progression.
+   Learning outcomes and session framing belong on the course website.
+2. **Core concepts** — definitions, notation, and only the results needed for
    correct application.
-4. **Worked engineering example** — calculations plus interpretation.
-5. **Assumptions, diagnostics, and limitations** — including what a conclusion
-   does *not* establish.
-6. **Python in practice** — reproducible code, an appropriate plot/table, and
-   a plain-language conclusion.
-7. **Common pitfalls** — especially notation, interpretation, or library
-   parameter traps.
-8. **Short practice / bridge** — enough to prepare the tutorial and the
-   relevant assignment; this is not a seventh assignment.
-9. **References and data provenance** — source-checking reference, data origin,
+3. **Integrated worked development** — formulas, intermediate calculations,
+   and several worked engineering examples placed beside the theory they clarify.
+4. **Assumptions, diagnostics, limitations, and important cautions** — addressed
+   where they become relevant rather than collected in a generic pitfalls section.
+5. **Concluding synthesis and transition** — concise prose at the end of the
+   final substantive section that connects the chapter's central ideas and, where
+   appropriate, prepares the next chapter.
+6. **Tutorial bridge** — examples should prepare students for the tutorial and
+   relevant assignment without adding textbook exercises.
+7. **References and data provenance** — source-checking reference, data origin,
    and licences where applicable.
 
-Definitions, propositions/theorems, examples, remarks, and exercises should
-use the same visual language as the MSE book template, but their amount must be
-appropriate to a practical 5-ECTS statistics course.  Proof-heavy exposition
-is not a goal unless it is necessary to avoid a misconception.
+This template is theory-only. Textbook chapters must not contain Python code,
+library calls, notebook workflows, software output, tutorial instructions, or
+exercises. Computational implementation belongs on the website, where each
+tutorial translates the chapter's mathematics into Python.
+
+Definitions, propositions/theorems, examples, and remarks should use the same
+visual language as the MSE book template, but their amount must be appropriate
+to a practical 5-ECTS statistics course. Formal proofs are not included.
+Standalone `Worked examples`, `Common pitfalls`, and `Chapter summary` sections
+are not part of the chapter template; examples, cautions, and synthesis are
+integrated into the substantive exposition.
 
 The one-to-one alignment is an output requirement, not a requirement to
 preserve existing tutorial content. During development, choose the strongest
@@ -84,8 +90,7 @@ together as one reviewed decision.
 
 | Ch. / session | Canonical title | Main dependency | Assessment bridge |
 | --- | --- | --- | --- |
-| A / 00 | Getting Started with Python and Data | None | Enables all tutorials and assignments |
-| 1 / 01 | Data and Descriptive Statistics | Appendix A | Assignment 1 |
+| 1 / 01 | Data and Descriptive Statistics | None | Assignment 1 |
 | 2 / 02 | Probability for Data Analysis | Chapter 1 | Assignment 2 |
 | 3 / 03 | Random Variables and Discrete Distributions | Chapter 2 | Assignment 2 |
 | 4 / 04 | Continuous Distributions in Practice | Chapters 2--3 | Assignment 3 |
@@ -100,7 +105,7 @@ together as one reviewed decision.
 
 ## Per-chapter contracts
 
-### Appendix A / Session 00 — Getting Started with Python and Data
+### Website self-study 00 — Getting Started with Python and Data
 
 - **Purpose:** establish a reproducible Python/Jupyter environment, file-path
   conventions, data import, and the distinction between a notebook and a
@@ -120,11 +125,15 @@ together as one reviewed decision.
 - **Purpose and outcome:** students describe a sample responsibly with tables,
   numerical summaries, histograms, boxplots, and scatterplots; distinguish
   sample/statistic from population/parameter.
-- **In scope:** variable and data types, mean/median/mode, quartiles/IQR,
-  sample variance and standard deviation, distribution shape, 1.5-IQR outlier
-  flagging, and graphical summaries.
-- **Out of scope:** inferential conclusions from plots, formal estimation
-  theory, time-series decomposition.
+- **In scope:** the full descriptive-statistics treatment reused from MSE
+  Chapter 6: frequency and relative-frequency tables, line and bar graphs,
+  grouped data, histograms, ogives, centre, spread, coefficient of variation,
+  percentiles and quartiles, summary statistics, normal and skewed data,
+  1.5-IQR outlier flagging, and boxplots.
+- **Out of scope:** the Law of Large Numbers and empirical rule, inferential
+  conclusions from plots, formal estimation theory, and time-series
+  decomposition. The normal model is introduced descriptively here and
+  developed mathematically in Chapter 4.
 - **Sources:** MSE Chapter 6; old STA descriptive-statistics material; existing
   STA1 Session 01 and `sensor_thickness.csv`; Ross 1.2--1.4 and 2.1--2.3 as
   checking/optional reading.
@@ -140,21 +149,23 @@ together as one reviewed decision.
 - **Purpose and outcome:** students translate a practical uncertainty question
   into events, tables/trees, conditional probabilities, independence, total
   probability, and Bayes' theorem.
-- **In scope:** sample spaces, events, complement/union/intersection,
-  conditional probability, independence, contingency tables, probability
-  trees, total probability, and Bayes.
-- **Out of scope:** standalone combinatorics catalogue, axiomatic proof
-  development, and joint distributions.
-- **Sources:** MSE Chapters 4--5 (selectively); old STA probability note and
-  SMP Session 01 as explanation checks; existing STA1 Session 02; Ross
-  3.1--3.4 and 3.6--3.8.
+- **In scope:** the complete theory progression reused from MSE Chapters 4--5:
+  random experiments, sample spaces, events, basic probability, joint events
+  and set operations, conditional probability, multiplication and total
+  probability rules, independence, and Bayes' theorem.
+- **Out of scope:** the MSE section on counting principles and joint
+  distributions.
+- **Sources:** MSE Chapters 4--5 are the canonical textbook source, reused
+  directly except for the stated omission and STA-book house-style changes;
+  old STA and SMP notes remain explanation checks.
 - **Python outcome:** calculate and visualise false-positive/false-negative
   scenarios from a contingency table; distinguish base rate from predictive
   value.
 - **Assessment bridge:** Assignment 2 begins—probability modelling for an
   engineering process.
-- **Acceptance:** every independence claim is distinguished from mutual
-  exclusivity, and Bayes is interpreted in the data context.
+- **Acceptance:** the chapter follows the MSE source sequence, ends with Bayes'
+  theorem, contains no counting-principles section or Python, and applies the
+  STA-book example and `\autoref` conventions consistently.
 
 ### Chapter 3 / Session 03 — Random Variables and Discrete Distributions
 

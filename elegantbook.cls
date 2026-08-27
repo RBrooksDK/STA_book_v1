@@ -1339,7 +1339,7 @@
 
 \renewcommand\tableofcontents{%
   \hypersetup{linktoc=all, linkcolor=black}
-  \setcounter{tocdepth}{2}  % This line sets the depth to include subsections
+  \setcounter{tocdepth}{1}  % Include chapters and sections, but not subsections
     \if@twocolumn
       \@restonecoltrue\onecolumn
     \else

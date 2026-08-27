@@ -1,19 +1,1061 @@
 \chapter{Random Variables and Discrete Distributions}
 \label{ch:discrete-distributions}
 
-\section{Engineering question and learning outcomes}
-How can counts and binary outcomes be modelled probabilistically?
+In \autoref{ch:probability-data-analysis}, probabilities were assigned to events: a component fails, a test returns a positive result, or a system experiences a particular combination of outcomes. In many applications, however, the outcome of interest is numerical. We may want to record the number of failed requests in an hour, the number of defective components in a batch, or the number of attempts required before a transmission succeeds. To analyse such quantities systematically, we introduce the concept of a \textbf{random variable}.
+
+A random variable connects the outcomes of a random experiment with numbers. This allows an uncertain process to be described using familiar mathematical ideas such as functions, sums, averages, and variation. The possible values of the variable do not all need to be equally likely. Their probabilities form a distribution, which provides a complete probabilistic description of the variable and makes it possible to answer questions about both individual outcomes and long-run behaviour.
+
+This chapter focuses on \textbf{discrete random variables}, whose possible values form a finite or countable set. A packet is either lost or delivered; a test suite contains an integer number of failures; and a queue receives a countable number of requests during a specified interval. These examples lead naturally to three important models. The Bernoulli distribution describes a single trial with two possible outcomes. The binomial distribution describes the number of successes in a fixed number of independent Bernoulli trials. The Poisson distribution describes counts occurring within a fixed interval of time, space, or another exposure measure.
+
+Before studying these models, we develop the general language used to describe discrete random variables. Probability mass functions assign probabilities to individual values, while cumulative distribution functions describe probabilities up to a specified threshold. Expected value and variance then summarise the centre and spread of a distribution. Together, these concepts provide the foundation for selecting, interpreting, and applying discrete probability models throughout statistics and data analysis.
 
 \section{Random variables, PMFs, and CDFs}
+\label{sec:random-variables-pmf-cdf}
+
+An event describes a collection of outcomes, but it does not necessarily describe them numerically. For example, suppose that two components are inspected and that each component either passes or fails. The sample space may be written as
+\[
+S=\{PP,PF,FP,FF\},
+\]
+where $PF$ means that the first component passes and the second fails. If the quantity of interest is the \emph{number} of failed components, the four outcomes are represented by the numbers $0$, $1$, and $2$. A random variable formalises this assignment.
+
+\begin{definition}{Random Variable}
+    Let $S$ be the sample space of a random experiment. A \textbf{random variable} is a function
+    \[
+    X:S\longrightarrow \mathbb{R}
+    \]
+    that assigns a real number $X(\omega)$ to each outcome $\omega\in S$.
+\end{definition}
+
+The word \emph{variable} can be slightly misleading. A random variable is a function with a fixed rule; it is the outcome of the underlying experiment, and therefore the resulting numerical value, that is uncertain. Before the experiment is observed, the random variable is denoted by an uppercase letter such as $X$. A particular realised value is denoted by the corresponding lowercase letter $x$.
+
+\begin{example}[ Number of Failed Components]\par
+Let $X$ denote the number of failed components when two components are inspected. The mapping from the sample space to the real numbers is
+\[
+X(PP)=0,\qquad X(PF)=1,\qquad X(FP)=1,\qquad X(FF)=2.
+\]
+Notice that different outcomes can produce the same value of $X$. In particular, the event that exactly one component fails is
+\[
+\{X=1\}=\{PF,FP\}.
+\]
+Thus, a statement involving a random variable defines an event in the original sample space.
+\end{example}
+
+Random variables may be discrete or continuous. A discrete random variable takes values in a finite or countably infinite set. Counts are therefore discrete, even when there is no fixed upper bound. A continuous random variable can take values throughout an interval and will be studied in \autoref{ch:continuous-distributions}.
+
+\begin{definition}{Discrete Random Variable and Support}
+    A random variable $X$ is \textbf{discrete} if its possible values form a finite or countably infinite set. The set of values with positive probability is called the \textbf{support} of $X$:
+    \[
+    \operatorname{supp}(X)=\{x\in\mathbb{R}:P(X=x)>0\}.
+    \]
+\end{definition}
+
+For the component example, $\operatorname{supp}(X)=\{0,1,2\}$. The support records the possible numerical values, while the probability distribution specifies how probability is allocated among them.
+
+\subsection{The probability mass function}
+
+The distribution of a discrete random variable is described by its probability mass function. It gives the probability of every individual value in the support.
+
+\begin{definition}{Probability Mass Function}
+    The \textbf{probability mass function} (PMF) of a discrete random variable $X$ is the function
+    \[
+    p_X(x)=P(X=x).
+    \]
+    For values outside the support of $X$, $p_X(x)=0$.
+\end{definition}
+
+\clearpage
+
+\begin{theorem}{Properties of a Probability Mass Function}
+    A function $p_X$ is a valid PMF if and only if
+    \begin{enumerate}
+        \item $p_X(x)\geq 0$ for every $x$, and
+        \item the probabilities over all values in the support sum to one:
+        \[
+        \sum_{x\in\operatorname{supp}(X)}p_X(x)=1.
+        \]
+    \end{enumerate}
+    For any set $A\subseteq\mathbb{R}$,
+    \[
+    P(X\in A)=\sum_{x\in A\cap\operatorname{supp}(X)}p_X(x).
+    \]
+\end{theorem}
+
+The final formula is particularly important: probabilities involving a discrete random variable are found by adding the probability masses of the values that satisfy the event.
+
+\begin{example}[ PMF for Failed Components]\par
+Suppose the two component inspections are independent and that each component fails with probability $0.1$. The probabilities associated with the four outcomes are
+\[
+\begin{aligned}
+P(PP)&=0.9\cdot0.9=0.81,\\
+P(PF)&=0.9\cdot0.1=0.09,\\
+P(FP)&=0.1\cdot0.9=0.09,\\
+P(FF)&=0.1\cdot0.1=0.01.
+\end{aligned}
+\]
+Since $X$ counts the number of failures, its PMF is
+\[
+\begin{array}{c|ccc}
+x & 0 & 1 & 2\\ \hline
+p_X(x) & 0.81 & 0.18 & 0.01
+\end{array}
+\]
+where $p_X(1)=P(PF)+P(FP)=0.18$. The values are non-negative and
+\[
+0.81+0.18+0.01=1,
+\]
+so the PMF is valid. The probability that at least one component fails is
+\[
+P(X\geq1)=p_X(1)+p_X(2)=0.18+0.01=0.19.
+\]
+Equivalently, the complement rule gives $P(X\geq1)=1-p_X(0)=1-0.81=0.19$.
+\end{example}
+
+The notation $p_X(x)$ identifies both the random variable and the value being considered. When several random variables occur in the same analysis, the subscript prevents ambiguity. The symbol $p$ without a subscript is often used for a model parameter, so keeping the subscript on a PMF is useful.
+
+\begin{example}[ Determining an Unknown PMF Constant]\par
+Suppose a discrete random variable $X$ has support $\{0,1,2,3\}$ and PMF
+\[
+p_X(x)=c(x+1),\qquad x\in\{0,1,2,3\},
+\]
+where $c$ is an unknown constant. Since the probability masses must sum to one,
+\[
+\sum_{x=0}^{3}p_X(x)
+=c(1+2+3+4)
+=10c
+=1.
+\]
+Therefore, $c=0.1$, and the PMF values are
+\[
+\begin{array}{c|cccc}
+x & 0 & 1 & 2 & 3\\ \hline
+p_X(x) & 0.1 & 0.2 & 0.3 & 0.4.
+\end{array}
+\]
+For example,
+\[
+P(X\geq2)=p_X(2)+p_X(3)=0.3+0.4=0.7.
+\]
+\end{example}
+
+\subsection{The cumulative distribution function}
+
+A PMF assigns probability to individual values. The cumulative distribution function instead accumulates all probability at or below a threshold. Unlike a PMF, a CDF is defined for every real number and can therefore be used for discrete as well as continuous random variables.
+
+\begin{definition}{Cumulative Distribution Function}
+    The \textbf{cumulative distribution function} (CDF) of a random variable $X$ is
+    \[
+    F_X(x)=P(X\leq x),\qquad x\in\mathbb{R}.
+    \]
+\end{definition}
+
+For a discrete random variable, the CDF is obtained by summing the probability masses up to $x$:
+\[
+F_X(x)=\sum_{t\leq x}p_X(t).
+\]
+The summation includes only values $t$ in the support of $X$. Consequently, the CDF of a discrete random variable is a step function. It remains constant between successive support values and jumps by $p_X(x)$ at each value $x$ in the support.
+
+\begin{theorem}{Properties of a Cumulative Distribution Function}
+    Every CDF $F_X$ has the following properties:
+    \begin{enumerate}
+        \item $0\leq F_X(x)\leq1$ for every $x\in\mathbb{R}$;
+        \item $F_X$ is non-decreasing: if $a<b$, then $F_X(a)\leq F_X(b)$;
+        \item $F_X$ is right-continuous;
+        \item
+        \[
+        \lim_{x\to-\infty}F_X(x)=0
+        \qquad\text{and}\qquad
+        \lim_{x\to\infty}F_X(x)=1.
+        \]
+    \end{enumerate}
+\end{theorem}
+
+These properties follow from the interpretation of $F_X(x)$ as accumulated probability. Raising the threshold cannot remove outcomes, and a sufficiently small or sufficiently large threshold eventually includes none or all of the possible values.
+
+\begin{example}[ CDF for Failed Components]\par
+For the number of failed components, the PMF values are $0.81$, $0.18$, and $0.01$ at $0$, $1$, and $2$, respectively. Therefore,
+\[
+F_X(x)=
+\begin{cases}
+0, & x<0,\\
+0.81, & 0\leq x<1,\\
+0.99, & 1\leq x<2,\\
+1, & x\geq2.
+\end{cases}
+\]
+At $x=1$, for example,
+\[
+F_X(1)=P(X\leq1)=p_X(0)+p_X(1)=0.81+0.18=0.99.
+\]
+The CDF jumps by $0.81$ at $0$, by $0.18$ at $1$, and by $0.01$ at $2$. Each jump is exactly the corresponding PMF value.
+\end{example}
+
+The CDF is especially convenient for threshold and interval probabilities. For any real numbers $a<b$,
+\[
+P(a<X\leq b)=F_X(b)-F_X(a).
+\]
+Tail probabilities follow from the complement rule:
+\[
+P(X>x)=1-F_X(x).
+\]
+Care is required with strict and non-strict inequalities for a discrete random variable because an individual value can have positive probability. For an integer-valued random variable,
+\[
+P(X\geq k)=1-F_X(k-1),
+\]
+not $1-F_X(k)$.
+
+\begin{example}[ Probabilities from a CDF]\par
+Return to the random variable with PMF
+\[
+p_X(0)=0.1,\qquad p_X(1)=0.2,\qquad p_X(2)=0.3,\qquad p_X(3)=0.4.
+\]
+Its CDF at the support values is
+\[
+F_X(0)=0.1,\qquad F_X(1)=0.3,\qquad F_X(2)=0.6,\qquad F_X(3)=1.
+\]
+The probability that $X$ is strictly greater than $1$ is
+\[
+P(X>1)=1-F_X(1)=1-0.3=0.7.
+\]
+The probability that $X$ lies between $1$ and $3$, excluding $1$ but including $3$, is
+\[
+P(1<X\leq3)=F_X(3)-F_X(1)=1-0.3=0.7.
+\]
+If the lower endpoint is included instead, then
+\[
+P(1\leq X\leq3)=1-F_X(0)=1-0.1=0.9.
+\]
+The difference occurs because $P(X=1)=0.2$.
+\end{example}
+
+The PMF and CDF contain the same information for a discrete random variable. The CDF is obtained by accumulating the PMF, and the PMF is recovered from the jumps of the CDF. Writing
+\[
+F_X(x^-)=\lim_{t\uparrow x}F_X(t)
+\]
+for the value immediately to the left of $x$, we have
+\[
+p_X(x)=F_X(x)-F_X(x^-).
+\]
+For an integer-valued random variable, this becomes
+\[
+p_X(k)=F_X(k)-F_X(k-1).
+\]
+The choice between PMF and CDF therefore depends on the question. The PMF is natural for exact values such as $P(X=2)$, whereas the CDF is often more convenient for thresholds, ranges, and tail probabilities.
 
 \section{Expectation and variance}
+\label{sec:expectation-variance}
 
+A probability distribution describes all possible values of a random variable and the probability attached to each value. For many purposes, however, it is useful to summarise the distribution using a small number of quantities. The \textbf{expected value} describes its centre, while the \textbf{variance} and \textbf{standard deviation} describe how widely its probability is spread around that centre.
+
+These quantities are properties of a probability model. They should therefore be distinguished from the descriptive measures introduced in \autoref{ch:data-descriptive-statistics}. The expected value $E[X]$ is the theoretical mean of the random variable $X$, whereas a sample mean $\bar{x}$ is calculated from observed data. Similarly, $\operatorname{Var}(X)$ describes variation in the probability distribution, whereas a sample variance $s^2$ is calculated from a particular sample.
+
+\phantomsection
+\subsection{Expected value}
+
+Suppose that a discrete random variable $X$ has support $\{x_1,x_2,\ldots\}$. Its expected value is a probability-weighted average of these possible values. Values with high probability contribute more than values with low probability.
+
+\begin{definition}{Expected Value of a Discrete Random Variable}
+    Let $X$ be a discrete random variable with PMF $p_X$. The \textbf{expected value}, or \textbf{mean}, of $X$ is
+    \[
+    E[X]=\sum_{x\in\operatorname{supp}(X)}x\,p_X(x),
+    \]
+    provided that the sum exists. The expected value is also denoted by $\mu_X$ or simply $\mu$ when the random variable is clear from context.
+\end{definition}
+
+The expected value is not necessarily a possible value of the random variable. It describes the long-run average obtained by repeating the random experiment under the same conditions, not the result expected in any one trial.
+
+\begin{example}[ Expected Number of Failed Components]\par
+For the number $X$ of failed components introduced in \autoref{sec:random-variables-pmf-cdf}, the PMF is
+\[
+\begin{array}{c|ccc}
+x & 0 & 1 & 2\\ \hline
+p_X(x) & 0.81 & 0.18 & 0.01.
+\end{array}
+\]
+The expected number of failed components is therefore
+\[
+\begin{aligned}
+E[X]
+&=0\cdot0.81+1\cdot0.18+2\cdot0.01\\
+&=0.20.
+\end{aligned}
+\]
+This does not mean that $0.20$ of a component will fail in a particular inspection. It means that over many inspections of two components, the average number of failures per inspection will approach $0.20$ if the model is appropriate. For example, across $1000$ such inspections, the model predicts approximately $1000\cdot0.20=200$ failed components in total.
+\end{example}
+
+\begin{example}[ Expected Value of a Fair Die]\par
+Let $X$ be the number shown on a fair six-sided die. Since every value has probability $1/6$,
+\[
+\begin{aligned}
+E[X]
+&=1\cdot\frac{1}{6}+2\cdot\frac{1}{6}+\cdots+6\cdot\frac{1}{6}\\
+&=\frac{1+2+3+4+5+6}{6}\\
+&=3.5.
+\end{aligned}
+\]
+No single roll can produce $3.5$. The value is nevertheless the centre of the probability distribution and the long-run average of repeated rolls.
+\end{example}
+
+Expected value is linear. Multiplying every possible value by a constant multiplies the expected value by the same constant, and adding a constant shifts the expected value by that amount.
+
+\begin{theorem}{Linearity of Expected Value}
+    If $X$ is a random variable with a finite expected value and $a$ and $b$ are constants, then
+    \[
+    E[aX+b]=aE[X]+b.
+    \]
+\end{theorem}
+
+More generally, an engineering quantity of interest may be a function of a random variable. If $Y=g(X)$, it is not necessary to determine the complete PMF of $Y$ before calculating its expectation. Each possible value $g(x)$ can be weighted directly by the probability $p_X(x)$.
+
+\begin{theorem}{Expectation of a Function of a Random Variable}
+    Let $X$ be a discrete random variable with PMF $p_X$, and let $g$ be a real-valued function. Then
+    \[
+    E[g(X)]
+    =\sum_{x\in\operatorname{supp}(X)}g(x)p_X(x),
+    \]
+    provided that the sum exists.
+\end{theorem}
+
+The linearity result follows by choosing $g(x)=ax+b$. The more general form is useful when costs, energy consumption, response penalties, or other consequences depend nonlinearly on the outcome.
+
+\begin{example}[ Expected Inspection Cost]\par
+Suppose that inspecting a pair of components has a fixed setup cost of EUR~$50$, and every failed component produces an additional cost of EUR~$600$. If $X$ is the number of failed components, the total cost is
+\[
+C=50+600X.
+\]
+Using linearity and the result $E[X]=0.20$,
+\[
+E[C]
+=50+600E[X]
+=50+600\cdot0.20
+=170.
+\]
+Thus, the expected cost is EUR~$170$ per inspection. This is a long-run average cost; an individual inspection costs EUR~$50$, EUR~$650$, or EUR~$1250$ depending on whether zero, one, or two components fail.
+\end{example}
+
+\pagebreak
+\begin{example}[ Expected Loss under a Nonlinear Penalty]\par
+Suppose instead that a simultaneous failure of both components is especially disruptive. Let $L=g(X)$ be the loss, where $g(0)=0$, $g(1)=500$, and $g(2)=5000$, measured in euros.
+The expected loss is
+\[
+\begin{aligned}
+E[L]
+&=g(0)p_X(0)+g(1)p_X(1)+g(2)p_X(2)\\
+&=0\cdot0.81+500\cdot0.18+5000\cdot0.01\\
+&=140.
+\end{aligned}
+\]
+Using $g(E[X])$ would not give the correct result: the penalty is nonlinear, and $g(0.20)$ is not even defined by the stated loss table. The probabilities must be applied to the possible losses themselves.
+\end{example}
+
+\subsection{Variance and standard deviation}
+
+Two distributions can have the same expected value while assigning probability very differently around it. Expected value alone therefore does not describe the uncertainty in a random variable. Variance measures the expected squared distance from the mean.
+
+\begin{definition}{Variance and Standard Deviation}
+    Let $X$ be a random variable with mean $\mu_X=E[X]$. The \textbf{variance} of $X$ is
+    \[
+    \operatorname{Var}(X)
+    =E\big[(X-\mu_X)^2\big].
+    \]
+    For a discrete random variable,
+    \[
+    \operatorname{Var}(X)
+    =\sum_{x\in\operatorname{supp}(X)}(x-\mu_X)^2p_X(x).
+    \]
+    The \textbf{standard deviation} of $X$ is
+    \[
+    \sigma_X=\sqrt{\operatorname{Var}(X)}.
+    \]
+\end{definition}
+
+The distances from the mean are squared for two reasons. First, positive and negative deviations cannot cancel. Second, large deviations receive greater weight than small deviations. Variance is always non-negative and equals zero only when $X$ is constant with probability one.
+
+Because the deviations are squared, variance has squared units. If $X$ is measured in milliseconds, then $\operatorname{Var}(X)$ is measured in square milliseconds. Standard deviation has the same unit as $X$ and is therefore usually easier to interpret directly.
+
+The definition of variance is conceptually important, but the following equivalent formula is often more convenient for calculation.
+
+\begin{theorem}{Computational Formula for Variance}
+    If $E[X^2]$ is finite, then
+    \[
+    \operatorname{Var}(X)=E[X^2]-\big(E[X]\big)^2.
+    \]
+\end{theorem}
+
+\clearpage
+\begin{example}[ Variance of the Number of Failed Components]\par
+For the component model, $E[X]=0.20$. To use the computational formula, first calculate
+\[
+\begin{aligned}
+E[X^2]
+&=0^2\cdot0.81+1^2\cdot0.18+2^2\cdot0.01\\
+&=0.22.
+\end{aligned}
+\]
+Therefore,
+\[
+\operatorname{Var}(X)
+=E[X^2]-\big(E[X]\big)^2
+=0.22-0.20^2
+=0.18,
+\]
+and
+\[
+\sigma_X=\sqrt{0.18}\approx0.424.
+\]
+The expected number of failures is $0.20$ per inspection, and the standard deviation is approximately $0.424$ failures.
+\end{example}
+
+Variance responds differently from expectation to a linear transformation. Adding a constant shifts every possible value and the mean by the same amount, so it does not change the distances from the mean. Multiplication by $a$ multiplies every distance by $a$ and every squared distance by $a^2$.
+
+\begin{theorem}{Variance under a Linear Transformation}
+    If $X$ has finite variance and $a$ and $b$ are constants, then
+    \[
+    \operatorname{Var}(aX+b)=a^2\operatorname{Var}(X).
+    \]
+    Consequently,
+    \[
+    \sigma_{aX+b}=|a|\sigma_X.
+    \]
+\end{theorem}
+
+\begin{example}[ Variation in Inspection Cost]\par
+For the inspection cost $C=50+600X$, the fixed setup cost changes the mean but contributes no variation. Hence,
+\[
+\begin{aligned}
+\operatorname{Var}(C)
+&=600^2\operatorname{Var}(X)\\
+&=600^2\cdot0.18\\
+&=64\,800,
+\end{aligned}
+\]
+measured in square euros. The standard deviation is
+\[
+\sigma_C=600\sqrt{0.18}\approx254.56\text{ EUR}.
+\]
+Thus, the model gives an expected cost of EUR~$170$ with a standard deviation of approximately EUR~$255$. The standard deviation is large relative to the expected cost because the usually low cost is accompanied by a small probability of a much larger failure cost.
+\end{example}
+
+\subsection{The mean and variance do not determine the distribution}
+
+Expected value and variance provide useful summaries, but they do not replace the PMF or CDF. Even distributions with the same mean and variance can differ in other ways, and distributions with the same mean can have very different levels of uncertainty.
+
+\begin{example}[ Same Mean, Different Variability]\par
+Consider two random variables $X$ and $Y$ with PMFs
+\[
+\begin{array}{c|ccc}
+x & 0 & 1 & 2\\ \hline
+p_X(x) & 0.25 & 0.50 & 0.25\\
+p_Y(x) & 0.50 & 0 & 0.50.
+\end{array}
+\]
+Both variables have expected value one:
+\[
+E[X]=0\cdot0.25+1\cdot0.50+2\cdot0.25=1
+\]
+and
+\[
+E[Y]=0\cdot0.50+1\cdot0+2\cdot0.50=1.
+\]
+For $X$,
+\[
+E[X^2]=0^2\cdot0.25+1^2\cdot0.50+2^2\cdot0.25=1.5,
+\]
+so
+\[
+\operatorname{Var}(X)=1.5-1^2=0.5.
+\]
+For $Y$,
+\[
+E[Y^2]=0^2\cdot0.50+1^2\cdot0+2^2\cdot0.50=2,
+\]
+so
+\[
+\operatorname{Var}(Y)=2-1^2=1.
+\]
+Although the two models have the same expected value, $Y$ never takes the central value $1$ and places all its probability at the two extremes. Its variance is therefore twice as large. A decision based only on the expected value would overlook this difference in uncertainty.
+\end{example}
+
+Expectation and variance will be calculated for each of the named distributions in the following sections. Their values help describe and compare the models, but the choice of model must still be based on the underlying random experiment and the complete form of the distribution.
+
+\clearpage
 \section{Bernoulli and binomial models}
+\label{sec:bernoulli-binomial-models}
 
+Many engineering measurements begin with a binary question. Did a request complete successfully? Was an intrusion attempt blocked? Did the temperature exceed a specified threshold? Was a delivery late? Did a bearing fail, a casting pass inspection, or a structural element satisfy its load requirement? Each question has two possible answers. A \textbf{Bernoulli model} describes one such trial, while a \textbf{binomial model} describes the number of successes in a fixed collection of repeated Bernoulli trials.
+
+The words \emph{success} and \emph{failure} are conventional labels only. A success is the outcome coded as $1$ and may represent an undesirable event such as a defect, packet loss, late delivery, or security alert. What matters is that the event of interest is defined clearly before the probability model is constructed.
+
+\phantomsection
+\subsection{Bernoulli trials}
+
+A single trial with two possible outcomes can be represented numerically by assigning the value $1$ to the event of interest and $0$ to its complement. This numerical representation is also called an indicator random variable.
+
+\begin{definition}{Bernoulli Random Variable}
+    A random variable $X$ has a \textbf{Bernoulli distribution} with parameter $p$ if
+    \[
+    P(X=1)=p
+    \qquad\text{and}\qquad
+    P(X=0)=1-p,
+    \]
+    where $0\leq p\leq1$. We write
+    \[
+    X\sim\operatorname{Bernoulli}(p).
+    \]
+    The value $1$ denotes success and the value $0$ denotes failure.
+\end{definition}
+
+The PMF can be written compactly as
+\[
+p_X(x)=p^x(1-p)^{1-x},
+\qquad x\in\{0,1\}.
+\]
+When $x=1$, this expression equals $p$; when $x=0$, it equals $1-p$. The CDF is
+\[
+F_X(x)=
+\begin{cases}
+0, & x<0,\\
+1-p, & 0\leq x<1,\\
+1, & x\geq1.
+\end{cases}
+\]
+
+\begin{theorem}{Mean and Variance of a Bernoulli Random Variable}
+    If $X\sim\operatorname{Bernoulli}(p)$, then
+    \[
+    E[X]=p,
+    \qquad
+    \operatorname{Var}(X)=p(1-p).
+    \]
+\end{theorem}
+
+The variance is zero when $p=0$ or $p=1$ because the outcome is then certain. It is largest when $p=0.5$, where the two outcomes are equally likely and the uncertainty about a single trial is greatest.
+
+\begin{example}[ Cybersecurity Alert for One Authentication Attempt]\par
+Suppose a monitoring rule flags an authentication attempt with probability $0.03$ under a specified operating condition. Let
+\[
+X=
+\begin{cases}
+1, & \text{the attempt is flagged},\\
+0, & \text{the attempt is not flagged}.
+\end{cases}
+\]
+Then $X\sim\operatorname{Bernoulli}(0.03)$, and
+\[
+P(X=1)=0.03,
+\qquad
+P(X=0)=0.97.
+\]
+Its mean and variance are
+\[
+E[X]=0.03
+\]
+and
+\[
+\operatorname{Var}(X)=0.03(1-0.03)=0.0291.
+\]
+The expected value $0.03$ is also the long-run proportion of attempts that the model predicts will be flagged. It is not, by itself, the probability that a flagged attempt is genuinely malicious; that would require information about the accuracy of the rule and the prevalence of malicious attempts, as discussed in \autoref{sec:bayes-theorem}.
+\end{example}
+
+\subsection{From Bernoulli trials to a binomial count}
+
+Suppose the same type of Bernoulli trial is repeated $n$ times and that $X$ counts the number of successes. A binomial model is appropriate only when the structure of the repeated experiment satisfies specific assumptions.
+
+\begin{definition}{Binomial Experiment}
+    A \textbf{binomial experiment} consists of trials satisfying all four conditions:
+    \begin{enumerate}
+        \item the number of trials $n$ is fixed in advance;
+        \item each trial has exactly two outcomes, labelled success and failure;
+        \item the probability of success is the same value $p$ on every trial; and
+        \item the trials are independent.
+    \end{enumerate}
+    The random variable of interest is the number of successes among the $n$ trials.
+\end{definition}
+
+The assumptions describe the data-generating process, not merely the observed data. Seeing $7$ failures in $100$ tests does not establish a binomial model. We must also have a reason to regard the $100$ tests as a fixed number of independent trials with a common failure probability.
+
+\subsection{The binomial coefficient}
+
+To derive the probability of exactly $k$ successes, first consider one particular ordering. For example, the sequence
+\[
+SSFSS
+\]
+contains four successes and one failure. If the trials are independent, the probability of this particular sequence is
+\[
+p^4(1-p).
+\]
+Every other sequence with four successes and one failure has the same probability. We therefore need to count how many different sequences contain exactly $k$ successes among $n$ positions.
+
+\clearpage
+
+\begin{definition}{Binomial Coefficient}
+    For integers $0\leq k\leq n$, the \textbf{binomial coefficient}
+    \[
+    \binom{n}{k}
+    =\frac{n!}{k!(n-k)!}
+    \]
+    is the number of ways to choose the $k$ positions occupied by successes among $n$ positions. By convention, $0!=1$.
+\end{definition}
+
+\begin{example}[ Placing Two Defects among Five Units]\par
+Suppose five units are inspected and exactly two are defective. Once the two positions containing defects have been chosen, the entire defect pattern is determined. The number of possible patterns is
+\[
+\binom{5}{2}
+=\frac{5!}{2!3!}
+=10.
+\]
+If each unit is independently defective with probability $p$, every one of these ten patterns has probability
+\[
+p^2(1-p)^3.
+\]
+Consequently, the total probability of exactly two defective units is
+\[
+10p^2(1-p)^3.
+\]
+\end{example}
+
+This is the only counting principle needed for the binomial model: $\binom{n}{k}$ counts the possible placements of $k$ successes, while independence gives the probability of each placement.
+
+\subsection{The binomial distribution}
+
+Combining the number of possible placements with the probability of each placement gives the binomial PMF.
+
+\begin{definition}{Binomial Distribution}
+    Let $X$ be the number of successes in $n$ independent Bernoulli trials, each with success probability $p$. Then $X$ has a \textbf{binomial distribution}, written
+    \[
+    X\sim\operatorname{Bin}(n,p),
+    \]
+    with PMF
+    \[
+    p_X(k)
+    =P(X=k)
+    =\binom{n}{k}p^k(1-p)^{n-k},
+    \qquad k=0,1,\ldots,n.
+    \]
+\end{definition}
+
+The four factors in the PMF have distinct meanings:
+\[
+\underbrace{\binom{n}{k}}_{\text{placements}}
+\underbrace{p^k}_{\text{successes}}
+\underbrace{(1-p)^{n-k}}_{\text{failures}}.
+\]
+The support is $\{0,1,\ldots,n\}$. For an integer $k$ in this support, the CDF is
+\[
+F_X(k)
+=P(X\leq k)
+=\sum_{j=0}^{k}\binom{n}{j}p^j(1-p)^{n-j}.
+\]
+
+\begin{theorem}{Mean and Variance of a Binomial Random Variable}
+    If $X\sim\operatorname{Bin}(n,p)$, then
+    \[
+    E[X]=np,
+    \qquad
+    \operatorname{Var}(X)=np(1-p),
+    \]
+    and
+    \[
+    \sigma_X=\sqrt{np(1-p)}.
+    \]
+\end{theorem}
+
+The mean has a direct interpretation. Each of the $n$ trials contributes a success with probability $p$, so the expected number of successes is $n$ times $p$. The variance also adds across the independent Bernoulli trials, giving $n$ times the Bernoulli variance $p(1-p)$. Independence is essential for this variance result.
+
+\begin{example}[ Defective Units in a Production Batch]\par
+Suppose a production process has a defect probability of $0.03$ for each unit. Twenty units are selected under conditions that make their defect indicators reasonably independent, and $X$ denotes the number of defective units. Under the stated assumptions,
+\[
+X\sim\operatorname{Bin}(20,0.03).
+\]
+The probability of exactly one defective unit is
+\[
+\begin{aligned}
+P(X=1)
+&=\binom{20}{1}(0.03)^1(0.97)^{19}\\
+&\approx0.3364.
+\end{aligned}
+\]
+The expected number and standard deviation are
+\[
+E[X]=20\cdot0.03=0.60
+\]
+and
+\[
+\sigma_X
+=\sqrt{20\cdot0.03\cdot0.97}
+\approx0.763.
+\]
+Thus, the model predicts an average of $0.60$ defective units per group of twenty. This does not imply that most inspected groups contain exactly $0.60$ defects, which is not a possible count.
+\end{example}
+
+\subsection{Exact, cumulative, and tail probabilities}
+
+The wording of a problem determines whether the PMF, CDF, or complement rule is most convenient. For $X\sim\operatorname{Bin}(n,p)$,
+\[
+P(X=k)=p_X(k)
+\]
+is an exact probability,
+\[
+P(X\leq k)=F_X(k)
+\]
+is cumulative, and
+\[
+P(X\geq k)=1-F_X(k-1)
+\]
+is an upper-tail probability. For integers $a\leq b$,
+\[
+P(a\leq X\leq b)=F_X(b)-F_X(a-1).
+\]
+Careful attention to the endpoints prevents the off-by-one errors discussed for general CDFs in \autoref{sec:random-variables-pmf-cdf}.
+
+\begin{example}[ Packet Loss in a Software System]\par
+Suppose a message contains $100$ packets. Under a simplified model, each packet is lost independently with probability $0.01$, and $X$ is the number of packets that must be retransmitted. Then
+\[
+X\sim\operatorname{Bin}(100,0.01).
+\]
+The probability that at least one packet must be retransmitted is most easily found using the complement:
+\[
+\begin{aligned}
+P(X\geq1)
+&=1-P(X=0)\\
+&=1-\binom{100}{0}(0.01)^0(0.99)^{100}\\
+&=1-(0.99)^{100}\\
+&\approx0.6340.
+\end{aligned}
+\]
+For at least two retransmissions, subtract the probabilities of zero and one:
+\[
+\begin{aligned}
+P(X\geq2)
+&=1-P(X=0)-P(X=1)\\
+&=1-(0.99)^{100}
+-\binom{100}{1}(0.01)(0.99)^{99}\\
+&\approx0.2642.
+\end{aligned}
+\]
+The mean and standard deviation are
+\[
+E[X]=100\cdot0.01=1
+\]
+and
+\[
+\sigma_X=\sqrt{100\cdot0.01\cdot0.99}\approx0.995.
+\]
+Although only one packet is lost on average, the probability of at least one retransmission is approximately $63.4\%$. Expected counts and event probabilities answer different questions.
+\end{example}
+
+\begin{example}[ Late Deliveries in a Supply Chain]\par
+A supplier schedules $12$ deliveries during a planning period. Suppose each delivery is late with probability $0.08$, independently of the others, and let $X$ be the number of late deliveries. Then
+\[
+X\sim\operatorname{Bin}(12,0.08).
+\]
+The probability of at most one late delivery is
+\[
+\begin{aligned}
+P(X\leq1)
+&=P(X=0)+P(X=1)\\
+&=(0.92)^{12}
++\binom{12}{1}(0.08)(0.92)^{11}\\
+&\approx0.7513.
+\end{aligned}
+\]
+The probability of exactly two late deliveries is
+\[
+\begin{aligned}
+P(X=2)
+&=\binom{12}{2}(0.08)^2(0.92)^{10}\\
+&\approx0.1835.
+\end{aligned}
+\]
+The expected number of late deliveries is
+\[
+E[X]=12\cdot0.08=0.96.
+\]
+\par\noindent These calculations are meaningful only if a common delay mechanism, such as the same port closure or severe weather system, does not create substantial dependence among deliveries.
+\end{example}
+
+\begin{example}[ Structural Fastener Tests]\par
+Twelve structural fasteners are subjected to identical acceptance tests. Suppose each fastener passes with probability $0.98$, independently of the others, and let $X$ be the number that pass. Then
+\[
+X\sim\operatorname{Bin}(12,0.98).
+\]
+The probability that all fasteners pass is
+\[
+P(X=12)=(0.98)^{12}\approx0.7847.
+\]
+The probability that at least eleven pass is
+\[
+\begin{aligned}
+P(X\geq11)
+&=P(X=11)+P(X=12)\\
+&=\binom{12}{11}(0.98)^{11}(0.02)+(0.98)^{12}\\
+&\approx0.9769.
+\end{aligned}
+\]
+\par\noindent Requiring every fastener to pass is therefore much more stringent than allowing one failure: the corresponding probabilities are approximately $78.5\%$ and $97.7\%$ under this model.
+\end{example}
+
+\subsection{Assessing the binomial assumptions}
+
+A binomial calculation can be numerically correct and still be an inappropriate analysis if its assumptions do not match the engineering process. Each assumption should be connected to a feature of the application.
+
+\pagebreak
+\begin{example}[ Can Exceedance Days Be Modelled as Binomial?]\par\noindent
+An environmental engineer records whether a river exceeds a warning level on each of $30$ consecutive days and proposes the model
+\[
+X\sim\operatorname{Bin}(30,p),
+\]
+where $X$ is the number of exceedance days. The number of trials is fixed and every day has two coded outcomes. However, the remaining assumptions require scrutiny.
+
+Exceedances on consecutive days are likely to be dependent because river levels persist and several days may be influenced by the same storm. The probability of exceedance may also vary with season, upstream releases, and soil saturation. Consequently, a binomial model is not justified merely because the response is binary on each day. It may be a rough approximation under stable conditions and weak dependence, but those conditions must be argued rather than assumed.
+\end{example}
+
+Dependence also arises through common-cause mechanisms. Fasteners installed in the same concrete pour may share material and installation conditions. Software requests handled by the same failing service instance may fail together. Deliveries routed through the same port may be delayed together. In each case, treating the outcomes as independent usually understates the chance of clusters of failures.
+
+The constant-probability assumption can fail when equipment wears, operators learn, weather changes, or suppliers differ. Sampling without replacement from a small finite lot creates another problem: after a defective item is selected, the composition of the remaining lot changes. For example, drawing ten bearings without replacement from a lot of fifty containing four defective bearings does not produce independent Bernoulli trials with a constant defect probability. A binomial model may sometimes be an adequate approximation when the sampled fraction is small, but it is not the exact model.
+
+The Bernoulli and binomial distributions therefore provide more than formulas. They express a particular structure: one binary trial, or a fixed number of comparable and independent binary trials. In the next section, the focus shifts from a fixed number of trials to events counted over an interval of time, space, area, volume, or another exposure measure.
+
+\clearpage
 \section{Poisson models}
+\label{sec:poisson-models}
 
-\section{Python in practice}
+The binomial distribution counts successes among a fixed number of trials. Many engineering counts arise differently. A server may experience an uncertain number of failures during a day, a sheet of material may contain an uncertain number of surface flaws, or a warehouse may receive an uncertain number of urgent orders during an hour. In these situations, the number of opportunities is not naturally fixed in advance. Instead, events are counted within a specified \textbf{exposure}, such as time, distance, area, volume, number of transactions, or operating hours.
 
-\section{Common pitfalls and chapter summary}
+The \textbf{Poisson distribution} is a fundamental model for such counts. It is governed by one parameter, $\lambda$, which is the expected number of events in the stated exposure. The exposure is part of the parameter definition: an expected count of two events per hour is not the same model as an expected count of two events per day.
 
-\section{Exercises}
+\phantomsection
+\subsection{When a Poisson model is plausible}
+
+A Poisson model is often considered when the following features are reasonable approximations:
+
+\begin{enumerate}
+    \item $X$ counts identifiable events in a clearly specified exposure;
+    \item the average event rate is approximately stable throughout that exposure;
+    \item occurrences do not substantially increase or decrease the chance of further occurrences, so clustering and inhibition are limited; and
+    \item there is no small fixed upper bound on the count that is central to the problem.
+\end{enumerate}
+
+These are modelling conditions, not facts implied by observing count data. A column of non-negative integers is not automatically Poisson distributed. The mechanism producing the counts and the definition of the exposure must support the model.
+
+\begin{definition}{Poisson Distribution}
+    A discrete random variable $X$ has a \textbf{Poisson distribution} with parameter $\lambda>0$ if
+    \[
+    P(X=k)
+    =p_X(k)
+    =\frac{e^{-\lambda}\lambda^k}{k!},
+    \qquad k=0,1,2,\ldots.
+    \]
+    We write
+    \[
+    X\sim\operatorname{Pois}(\lambda).
+    \]
+\end{definition}
+
+Here, $e\approx2.71828$ is the base of the natural logarithm, and $0!=1$. The support is the set of all non-negative integers. Although the mathematical model has no upper bound, very large counts may have extremely small probabilities when $\lambda$ is modest.
+
+The parameter $\lambda$ is both the centre of the distribution and an expected count for one specific exposure. If a system has a stable average rate $r$ events per unit of exposure and the exposure has size $t$, then
+\[
+\lambda=rt.
+\]
+The units cancel in the multiplication, but they remain essential to the interpretation. For example,
+\[
+\left(0.8\ \frac{\text{failures}}{\text{hour}}\right)
+(4\ \text{hours})
+=3.2\ \text{failures}.
+\]
+Thus, the appropriate Poisson parameter for four hours is $3.2$, not $0.8$.
+
+\subsection{PMF, CDF, and tail probabilities}
+
+The PMF gives the probability of an exact count. For $X\sim\operatorname{Pois}(\lambda)$,
+\[
+P(X=k)=\frac{e^{-\lambda}\lambda^k}{k!}.
+\]
+The CDF is obtained by summing the PMF:
+\[
+F_X(k)
+=P(X\leq k)
+=\sum_{j=0}^{k}\frac{e^{-\lambda}\lambda^j}{j!}.
+\]
+As with the binomial distribution, complements are often the most efficient way to calculate upper-tail probabilities:
+\[
+P(X\geq k)=1-F_X(k-1).
+\]
+In particular,
+\[
+P(X=0)=e^{-\lambda}
+\]
+and
+\[
+P(X\geq1)=1-e^{-\lambda}.
+\]
+
+\begin{example}[ Software Failures during an Operating Window]\par
+A service experiences failures at an average rate of $0.8$ per hour under stable operating conditions. Let $X$ be the number of failures during a four-hour monitoring window. The parameter for this exposure is
+\[
+\lambda
+=\left(0.8\ \frac{\text{failures}}{\text{hour}}\right)
+(4\ \text{hours})
+=3.2\ \text{failures},
+\]
+so
+\[
+X\sim\operatorname{Pois}(3.2).
+\]
+The probability of no failures is
+\[
+P(X=0)=e^{-3.2}\approx0.0408.
+\]
+The probability of at most two failures is
+\[
+\begin{aligned}
+P(X\leq2)
+&=P(X=0)+P(X=1)+P(X=2)\\
+&=e^{-3.2}\left(1+3.2+\frac{3.2^2}{2!}\right)\\
+&\approx0.3799.
+\end{aligned}
+\]
+Therefore,
+\[
+P(X\geq3)=1-P(X\leq2)\approx0.6201.
+\]
+Under this model, three or more failures during the four-hour window are more likely than fewer than three. Whether that rate is operationally acceptable is an engineering decision, not a conclusion supplied by the probability model alone.
+\end{example}
+
+\subsection{Mean and variance}
+
+The Poisson distribution has the distinctive property that its mean and variance are equal.
+
+\begin{theorem}{Mean and Variance of a Poisson Random Variable}
+    If $X\sim\operatorname{Pois}(\lambda)$, then
+    \[
+    E[X]=\lambda,
+    \qquad
+    \operatorname{Var}(X)=\lambda,
+    \]
+    and
+    \[
+    \sigma_X=\sqrt{\lambda}.
+    \]
+\end{theorem}
+
+The equality of mean and variance is a property of the theoretical model. It does not mean that the sample mean and sample variance calculated from a finite dataset must be exactly equal. Their relationship can nevertheless be useful when assessing whether a Poisson model is plausible.
+
+\begin{example}[ Surface Flaws in Manufactured Panels]\par
+Suppose surface flaws occur at an average rate of $0.4$ per square metre, and a panel has an area of $5$ square metres. If the rate is stable across the surface and flaws occur without substantial clustering, then
+\[
+\lambda
+=\left(0.4\ \frac{\text{flaws}}{\text{m}^2}\right)
+(5\ \text{m}^2)
+=2\ \text{flaws}.
+\]
+Let $X$ be the number of flaws on one panel. Then
+\[
+X\sim\operatorname{Pois}(2).
+\]
+The probability of exactly three flaws is
+\[
+\begin{aligned}
+P(X=3)
+&=\frac{e^{-2}2^3}{3!}\\
+&\approx0.1804.
+\end{aligned}
+\]
+The probability of at least one flaw is
+\[
+P(X\geq1)=1-e^{-2}\approx0.8647.
+\]
+Finally,
+\[
+E[X]=2,
+\qquad
+\sigma_X=\sqrt{2}\approx1.414.
+\]
+The model therefore predicts two flaws per panel on average, with a standard deviation of approximately $1.41$ flaws.
+\end{example}
+
+\subsection{Changing the exposure}
+
+When the rate is constant, changing the exposure changes $\lambda$ proportionally. If the event rate is $r$ per unit and the exposure changes from $t_1$ to $t_2$, then
+\[
+\lambda_1=rt_1
+\qquad\text{and}\qquad
+\lambda_2=rt_2.
+\]
+It is incorrect to reuse a parameter defined for one exposure without rescaling it to the exposure in the probability question.
+
+\begin{example}[ Urgent Orders during Twenty Minutes]\par
+A distribution centre receives urgent orders at an average rate of six per hour. Let $X$ be the number received during the next twenty minutes. Since twenty minutes is one third of an hour,
+\[
+\lambda
+=\left(6\ \frac{\text{orders}}{\text{hour}}\right)
+\left(\frac{1}{3}\ \text{hour}\right)
+=2\ \text{orders}.
+\]
+Thus, $X\sim\operatorname{Pois}(2)$. The probability of more than four urgent orders is
+\[
+\begin{aligned}
+P(X>4)
+&=1-P(X\leq4)\\
+&=1-\sum_{k=0}^{4}\frac{e^{-2}2^k}{k!}\\
+&\approx0.0527.
+\end{aligned}
+\]
+The probability of more than four arrivals in twenty minutes is therefore approximately $5.3\%$. Using $\lambda=6$ would answer a different question: the number of arrivals in one hour.
+\end{example}
+
+\subsection{Poisson approximation to the binomial distribution}
+
+The Poisson distribution can also approximate a binomial distribution when the number of trials is large, the success probability is small, and
+\[
+\lambda=np
+\]
+is of moderate size. The approximation replaces
+\[
+X\sim\operatorname{Bin}(n,p)
+\]
+with
+\[
+X\approx\operatorname{Pois}(np).
+\]
+It is especially useful for rare-event counts when evaluating the binomial PMF directly is inconvenient. The approximation does not remove the binomial assumptions: the underlying trials must still be independent with a common success probability.
+
+\begin{example}[ Rare Security Incidents]\par
+Suppose $10\,000$ independent connection attempts each have probability $0.0002$ of producing a particular security incident. If $X$ is the number of incidents, the exact model is
+\[
+X\sim\operatorname{Bin}(10\,000,0.0002).
+\]
+Since $n$ is large and $p$ is small, use the Poisson parameter
+\[
+\lambda=np=10\,000\cdot0.0002=2.
+\]
+The probability of at least three incidents is approximately
+\[
+\begin{aligned}
+P(X\geq3)
+&\approx1-P(Y\leq2),
+\qquad Y\sim\operatorname{Pois}(2),\\
+&=1-e^{-2}\left(1+2+\frac{2^2}{2!}\right)\\
+&\approx0.3233.
+\end{aligned}
+\]
+The exact binomial probability is also $0.3233$ to four decimal places in this case. Such close agreement is not guaranteed when $p$ is larger or when $n$ is small.
+\end{example}
+
+\subsection{Assessing the Poisson assumptions}
+
+The mean--variance relationship provides a useful diagnostic. If repeated counts from comparable exposures have a sample variance substantially larger than their sample mean, the data are said to show \textbf{overdispersion} relative to a Poisson model. Possible causes include clustering, unobserved differences between exposures, a changing event rate, or common-cause failures. A sample variance substantially smaller than the sample mean is called \textbf{underdispersion} and may arise from spacing, inhibition, capacity limits, or unusually regular processes.
+
+Neither pattern proves that a Poisson model is wrong, because sample summaries vary from one dataset to another. They identify features that should be investigated using process knowledge, visualisation, and later statistical methods.
+
+\begin{example}[ Annual Flood-Warning Events]\par
+Suppose annual counts of flood-warning events over comparable years have a sample mean of $3.5$ and a sample variance of $9.1$. A Poisson model with $\lambda=3.5$ would have theoretical variance $3.5$, considerably smaller than the observed sample variance.
+
+The difference suggests overdispersion. A plausible explanation is that some years are much wetter than others and that several warnings may arise from the same persistent weather system. The annual rate is then not stable across years, and events within a year may be clustered. The comparison is a diagnostic rather than a formal rejection of the model, but it gives a clear reason to examine the mechanism before using Poisson tail probabilities for planning.
+\end{example}
+
+A Poisson model is also inappropriate when the count has a small fixed maximum that matters. The number of failed components among twenty tested components cannot exceed twenty and naturally begins with a binomial model. By contrast, the number of failures during a period of operation may have no comparable fixed trial count and can be a plausible Poisson quantity. The model choice follows from the event-generating structure, not simply from whether the observed variable is a count.
+
+Together, the Bernoulli, binomial, and Poisson distributions cover three common engineering structures: one binary outcome, successes among a fixed number of trials, and events within a specified exposure. Selecting among them requires both a correctly calculated probability and a credible account of how the data are generated.
+
+The models in this chapter describe binary outcomes and event counts. Many engineering quantities, however, are measured on a continuous scale, including response times, dimensions, temperatures, and component lifetimes. The next chapter develops probability models for such continuous measurements.

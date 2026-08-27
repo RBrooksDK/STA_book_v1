@@ -14,7 +14,7 @@ Use sources in this order:
 2. The frozen chapter/session contract in this repository.
 3. Correct statistical theory, cross-checked against Ross and another authoritative source where necessary.
 4. Brooks-authored material in `MSE_book_v2`, `STA_26`, `SMP1_25`, and `STA1_26`.
-5. Newly written examples, explanations, Python sections, assignments, and project material.
+5. Newly written theoretical explanations, derivations, worked examples, tutorial material, assignments, and project material.
 
 Ross is a scope and verification source. Do not copy its prose, figures, examples, or exercises. Brooks-authored material may be revised and reused, but it must still be checked for correctness, notation, level, and fit with the new course.
 
@@ -28,7 +28,6 @@ textbook chapter and session contract, not constrain them.
 
 | Course item | Textbook item |
 | --- | --- |
-| Self-study 00 | Appendix A — Python and Data Setup |
 | Session 01 | Chapter 1 — Data and Descriptive Statistics |
 | Session 02 | Chapter 2 — Probability for Data Analysis |
 | Session 03 | Chapter 3 — Random Variables and Discrete Distributions |
@@ -44,11 +43,11 @@ textbook chapter and session contract, not constrain them.
 
 ## Chapter sources
 
-### Appendix A — Python and Data Setup
+### Website self-study 00 — Python and Data Setup
 
 - **STA1:** `00_Getting_Started_with_Python_and_Data/README.md`, `pages/conventions.md`, `pages/datasets.md`
 - **Purpose:** environment setup, reproducibility, data paths, core packages, notebook and reporting workflow
-- **Boundary:** installation and programming details belong here rather than in Chapter 1
+- **Boundary:** installation and programming details belong on the website and are not part of the textbook
 
 ### Chapter 1 — Data and Descriptive Statistics
 
@@ -58,22 +57,22 @@ textbook chapter and session contract, not constrain them.
 - **Session notes:** [STA 01](https://drive.google.com/file/d/1D20cFjJA9CmBZQGu_rESr4u4jqoc_x7a/view?usp=sharing), used selectively
 - **Ross check:** 1.2–1.4 and 2.1–2.3
 - **Core:** populations and samples; data types; summaries; sample versus population variance; histograms, boxplots, scatterplots, shape and outliers
-- **New work:** a coherent engineering dataset from import to interpretation; boxplots must appear here, not first in ANOVA
-- **Draft status:** complete first textbook draft, including reproducible Python figures, worked sensor-thickness analysis, data-quality guidance, and exercises
-- **Editorial departures from MSE Chapter 6:** preserves definitions and notation, but moves boxplots into the core exploratory workflow; defers the normal model, empirical rule, and Law of Large Numbers to Chapters 4–5; omits ogives, the computational variance shortcut, coefficient of variation, and kurtosis from STA1 core
-- **Verification record:** all displayed dataset values are calculated from `data/sensor_thickness.csv`; sample spread uses `ddof=1`; the two 1.5-IQR flags are observations 162 and 165
+- **Reuse decision:** the textbook chapter is a direct reuse of `MSE_book_v2/chapter06.tex`, including its tables, graphs, grouped-data treatment, ogives, computational variance formula, coefficient of variation, normal and skewed data, outlier detection, and boxplots
+- **Draft status:** complete theory-first textbook chapter; Python remains tutorial-only
+- **Editorial departures from MSE Chapter 6:** removes the Law of Large Numbers and empirical-rule material; retains a descriptive introduction to normal data and the normal curve, with the mathematical model deferred by cross-reference to Chapter 4; adapts only chapter labels, STA colour names, transitions to later chapters, and minor wording needed for this standalone book
+- **Reference convention:** all internal references use `\autoref` so the complete phrase, such as `Figure 1.5`, is clickable
 
 ### Chapter 2 — Probability for Data Analysis
 
 - **STA1:** `02_Probability_for_Data_Analysis/README.md`, `Tutorial_02.md`
-- **MSE:** `MSE_book_v2/chapter04.tex` and `chapter05.tex`, selectively
+- **MSE:** `MSE_book_v2/chapter04.tex` and `chapter05.tex` are the canonical source and are reused directly
 - **Session notes:** [STA 01](https://drive.google.com/file/d/1D20cFjJA9CmBZQGu_rESr4u4jqoc_x7a/view?usp=sharing), [SMP 01](https://drive.google.com/file/d/1oqEy7sINksGCfdytv_O8qIZ0FoVEyWjz/view?usp=drive_link)
 - **Ross check:** 3.1–3.4 and 3.6–3.8
-- **Core:** events, rules, conditional probability, independence, total probability, Bayes, contingency tables and probability trees
+- **Core:** random experiments, sample spaces and events; basic probability; joint events and set operations; conditional probability; multiplication and total probability rules; independence; and Bayes' theorem
 - **Boundary:** no standalone combinatorics catalogue; joint-distribution theory remains in SMP1
-- **Draft status:** complete first textbook draft with an optical-inspection example, natural frequencies, probability tree, reproducible base-rate figure, Python simulation, and exercises
-- **Editorial departures from MSE Chapters 4–5:** preserves sample-space, event, conditional-probability, independence, total-probability, and Bayes notation; removes the permutations/combinations catalogue, conditional-probability axioms, multi-event independence theory, and probability puzzles from STA1 core
-- **Example decision:** the circuit-board inspection model replaces the medical-test example and runs consistently from the 2-by-2 table through Bayes and Python
+- **Draft status:** complete theory-first chapter copied from the relevant MSE material; Python remains tutorial-only
+- **Editorial departures from MSE Chapters 4–5:** adds an original chapter introduction motivated by the Monty Hall problem and Bayes' theorem; omits the whole `Counting Principles` section; renames the opening section to `Random Experiments, Sample Spaces, and Events`; adapts named examples to the STA-book title convention; uses `\autoref` for complete clickable references; and replaces the single Python-file context with an equivalent JavaScript-file context to preserve the theory-only policy
+- **Section order:** 2.1 Random Experiments, Sample Spaces, and Events; 2.2 Basic Probability; 2.3 Probability of Joint Events and Set Operations; 2.4 Conditional Probability; 2.5 Multiplication and Total Probability Rules; 2.6 Independence; 2.7 Bayes' Theorem
 
 ### Chapter 3 — Random Variables and Discrete Distributions
 
@@ -81,8 +80,10 @@ textbook chapter and session contract, not constrain them.
 - **Old STA:** sessions 02–03 and their tutorials
 - **Session notes:** [STA 02](https://drive.google.com/file/d/1azFhbhkKSIiLboKuxTlyhh-41jYMtbRm/view?usp=sharing), [STA 03](https://drive.google.com/file/d/1laRKIxHLa2DBjmzVMQuKyc6vilaPrFNx/view?usp=sharing), [SMP 02](https://drive.google.com/file/d/1LJ8Nu0D1PLLB1FF1jTsLK50HGLhl1EtG/view?usp=sharing)
 - **Ross check:** 4.1–4.2, 4.4, 4.6, 5.1–5.2; optional parts of 5.3
-- **Core:** random variables, PMF, CDF, expectation, variance, Bernoulli, binomial and Poisson; SciPy and simulation
+- **Core:** random variables, PMF, CDF, expectation, variance, Bernoulli, binomial and Poisson; SciPy and simulation remain tutorial-only on the course website
 - **Boundary:** geometric, negative binomial and hypergeometric are enrichment; no MGFs or multivariate theory
+- **Draft status:** Sections 3.1–3.4 are complete as theory-first textbook material; the chapter close remains to be written
+- **Example coverage so far:** components and inspection cost, cybersecurity alerts and rare incidents, production defects and panel flaws, software packet loss and service failures, supply-chain delays and urgent orders, structural fastener tests, climate exceedances and flood warnings, and mechanical sampling without replacement
 
 ### Chapter 4 — Continuous Distributions in Practice
 
@@ -135,7 +136,7 @@ textbook chapter and session contract, not constrain them.
 - **Old STA:** `10_Variansanalyse_ANOVA/README.md` and tutorial/site exercises
 - **Ross check:** 10.1–10.3
 - **Core:** family-wise type I error, one-way ANOVA, between/within variation, F-statistic, assumptions, diagnostics and Tukey HSD
-- **New work:** the old course has no separate session-notes PDF; this chapter requires substantial new prose, examples, figures and exercises
+- **New work:** the old course has no separate session-notes PDF; this chapter requires substantial new prose, examples, and figures
 - **Boundary:** no two-way ANOVA or interactions in core STA1
 
 ### Chapter 10 — Simple Linear Regression
@@ -178,7 +179,7 @@ Before drafting a chapter, record:
 - Ross verification sections;
 - dataset, units, provenance and licence;
 - definitions and results to include;
-- Python functions and conventions;
+- tutorial-only Python functions and conventions, kept outside the textbook;
 - worked engineering example;
 - assignment/project connection;
 - known gaps and disputed points;
@@ -188,7 +189,7 @@ Before drafting a chapter, record:
 
 1. ANOVA and categorical analysis require the most new textbook writing.
 2. Old hypothesis-testing material must be divided cleanly between Chapters 7 and 8.
-3. MSE probability Chapters 4–5 must be condensed; general combinatorics is removed from the STA1 narrative.
+3. MSE probability Chapters 4–5 are reused directly, with only the counting-principles section omitted and the agreed house-style adaptations applied.
 4. Continuous-distribution explanations must be rewritten without manual integration.
 5. The assessment pages intentionally remain placeholders until the six assignments and group project are designed.
-6. Every reused example must be checked for units, assumptions, notation, licensing and alignment with the practical Python focus.
+6. Every reused example must be checked for units, assumptions, notation, licensing, and alignment with the theory-first textbook style; Python belongs in tutorials.

@@ -8,23 +8,29 @@ This internal guide is the shared contract for the STA1 website, tutorials, note
 
 - Write for bachelor-level software and engineering students taking a practical statistics course.
 - Begin with an engineering question, measurement or decision rather than a formula catalogue.
-- Explain the statistical idea before naming the Python function.
+- Explain the statistical idea through definitions, formulas, and worked examples.
 - Use plain English, short paragraphs and concrete units.
 - End every worked analysis with an interpretation in the problem context.
 - Distinguish statistical significance from practical importance.
 - State assumptions and limitations without turning every section into a warning list.
 - Do not expose editorial instructions, AI prompts, unresolved drafting language or internal source disputes to students.
 - Avoid claiming causation from observational data.
+- Distribute examples across software engineering, cybersecurity, climate and environmental engineering, supply chain and logistics, mechanical engineering, production and manufacturing, and civil and building engineering. Individual chapters need not contain every field, but the book as a whole must represent all of them.
+- Use each engineering context because it illuminates the statistical idea. Give plausible units, mechanisms, and assumptions rather than merely relabelling a generic calculation.
 
 ## Division of responsibility
 
 | Artifact | Primary responsibility |
 | --- | --- |
-| Textbook | durable theory, definitions, results, derivations at STA1 level, worked examples, Python translation and chapter exercises |
+| Textbook | durable theory, definitions, results, derivations at STA1 level, figures, and many worked formula-based examples; no Python, tutorials, exercises, or platform instructions |
 | Session page | preparation, session focus, links, learning outcomes, material and assessment connection |
 | Tutorial/notebook | guided practical analysis and executable Python |
 | Assignment | a bounded analysis that students can defend orally |
 | Group project | integrated method selection and complete engineering analysis |
+
+Each textbook chapter opens with a continuous, theory-oriented introduction that motivates the subject and previews its conceptual progression. Do not add a separate “Engineering question and learning outcomes” section; learning outcomes and session framing belong on the course website.
+
+Number chapters and sections only. Subsections and lower-level headings remain unnumbered; this is enforced globally with `\setcounter{secnumdepth}{1}` rather than relying on authors to choose starred heading commands.
 | Course-site reference page | logistics, conventions, literature, datasets and exam information |
 
 The website should not duplicate whole textbook sections. The textbook should not contain semester dates, release schedules or platform instructions.
@@ -33,16 +39,38 @@ The website should not duplicate whole textbook sections. The textbook should no
 
 Reuse the visual system and LaTeX template from `MSE_book_v2`.
 
+Use `\autoref{...}` for every internal table, figure, chapter, section,
+definition, theorem, and example reference. Do not write constructions such as
+`Figure~\ref{...}`, because that links only the number. The complete phrase
+(`Figure 1.5`, for example) must be one hyperlink, as in the MSE book.
+
 - **Definition:** terminology that must be used precisely.
 - **Result/Theorem:** an actual mathematical or statistical statement, with assumptions.
 - **Example:** a worked application with context, calculation and interpretation.
 - **Remark:** clarification, nuance or connection.
 - **Warning/Common mistake:** a specific recurring misconception, used sparingly.
-- **Python section:** translation from mathematical objects to library calls, followed by a complete reproducible example.
 - **Summary:** a compact conceptual and procedural recap.
-- **Exercises:** interpretation, calculation, implementation and decision-making in increasing difficulty.
+- **Exercises:** belong on the STA1 course website, not in the textbook.
 
-Do not label procedural advice as a theorem. Do not use formal proof language where the course only needs an intuitive or simulation-based justification.
+The textbook is a standalone theory book in the style of *Mathematics for
+Software Engineering*. Python implementations, simulations, notebooks, and
+software-specific instructions belong exclusively in website tutorials. A
+chapter should normally explain each important formula and follow it with one
+or more worked numerical or engineering examples.
+
+Do not label procedural advice as a theorem. The textbook does not include
+formal proofs or `proof` environments, because proofs are not part of STA1.
+State important results clearly and support them with interpretation, concise
+formula-based explanation where useful, and worked examples.
+
+Named examples follow the MSE source pattern exactly:
+
+    \begin{example}[ Example title]\par
+    Worked example text.
+    \end{example}
+
+The leading space before the title separates it from the example number, and
+the explicit line break keeps the title distinct from the worked text.
 
 ## Mathematical notation
 
@@ -101,7 +129,10 @@ Use population variance only when the data genuinely constitute the full populat
 - Report an estimate and confidence interval alongside a test whenever useful.
 - Report exact p-values when practical; use \(p<0.001\) rather than `p = 0.000`.
 
-## Python conventions
+## Python conventions for website tutorials only
+
+The conventions in this section do not authorise Python content in the
+textbook. They govern tutorials, notebooks, assignments, and project material.
 
 ### Standard setup
 
@@ -182,4 +213,3 @@ Before a chapter/session bundle is approved:
 - reused material has been rewritten as needed and checked for copyright;
 - the final example ends with an engineering interpretation;
 - website and PDF layouts have been inspected visually.
-

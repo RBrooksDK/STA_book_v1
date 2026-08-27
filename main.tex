@@ -1,11 +1,15 @@
 \documentclass[fleqn,11pt,color=blue]{elegantbook}
 
+% Number and list chapters and sections only; subsections remain unnumbered
+% and do not appear in the table of contents.
+\setcounter{secnumdepth}{1}
+\setcounter{tocdepth}{1}
+
 \usepackage{parskip}
 \usepackage{graphicx}
 \usepackage{booktabs}
 \usepackage{tabularx}
 \usepackage{mathtools}
-\usepackage{listings}
 \usepackage{xcolor}
 \usepackage{tikz}
 \usepackage{pgfplots}
@@ -16,7 +20,7 @@
 \input{stacolors}
 
 \title{Statistics and Data Analysis for Engineers}
-\subtitle{A Practical, Python-Oriented Introduction}
+\subtitle{A Theory-First Introduction with Worked Examples}
 \author{Richard Brooks}
 \institute{VIA University College}
 \date{2026}
@@ -25,7 +29,7 @@
 \definecolor{customcolor}{RGB}{108,162,198}
 \colorlet{coverlinecolor}{customcolor}
 
-% Original vector cover using the same visual language as the STA1 site.
+% Original vector cover for the textbook.
 \makeatletter
 \renewcommand*{\maketitle}{%
   \hypersetup{pageanchor=false}%
@@ -44,7 +48,7 @@
         {\fontsize{30}{35}\selectfont\bfseries Statistics and Data\\Analysis for Engineers};
       \node[anchor=north west,text=white!90]
         at ([xshift=1.75cm,yshift=-4.7cm]current page.north west)
-        {\Large A Practical, Python-Oriented Introduction};
+        {\Large A Theory-First Introduction with Worked Examples};
 
       \begin{scope}[shift={([xshift=2.2cm,yshift=-8.9cm]current page.north west)}]
         \draw[white!75,line width=0.8pt] (0,0) -- (14.5,0);
@@ -72,24 +76,35 @@
 }
 \makeatother
 
-\lstdefinestyle{pythonStyle}{
-  language=Python,
-  basicstyle=\ttfamily\small,
-  keywordstyle=\color{blue}\bfseries,
-  commentstyle=\color{gray},
-  stringstyle=\color{red!70!black},
-  numbers=left,
-  numberstyle=\tiny\color{gray},
-  numbersep=6pt,
-  showstringspaces=false,
-  frame=single,
-  breaklines=true,
-  columns=fullflexible
+% Make complete references such as "Figure 1.5" and "Definition 1.2"
+% clickable, matching the reference style used in Mathematics for Software
+% Engineering.
+\makeatletter
+\AtBeginDocument{%
+  \def\tcb@cnt@definitionautorefname{Definition}%
+  \def\tcb@cnt@theoremautorefname{Theorem}%
+  \def\tcb@cnt@lemmaautorefname{Lemma}%
+  \def\tcb@cnt@corollaryautorefname{Corollary}%
+  \def\tcb@cnt@propositionautorefname{Proposition}%
+  \def\tcb@cnt@axmautorefname{Axiom}%
+  \def\tcb@cnt@postulatenameautorefname{Postulate}%
+  \def\examautorefname{Example}%
+  \def\exerautorefname{Exercise}%
+  \def\probautorefname{Problem}%
+  \def\remarkautorefname{Remark}%
 }
+\makeatother
 
-\lstnewenvironment{python}[1][]
-  {\lstset{style=pythonStyle,#1}}
-  {}
+% Keep named example titles distinct from the example number and body text.
+% ElegantBook's default environment can run an optional title into the
+% example number; the explicit space below keeps number and title separate.
+\makeatletter
+\renewenvironment{example}[1][]{%
+  \vspace{1em}%
+  \refstepcounter{exam}%
+  \par\noindent\textbf{\color{main}{\examplename} \theexam #1 }\rmfamily}{%
+  \par\ignorespacesafterend}
+\makeatother
 
 \addbibresource{reference.bib}
 \DeclareLanguageMapping{english}{english-apa}
@@ -122,8 +137,5 @@
 
 \nocite{*}
 \printbibliography[heading=bibintoc,title=References]
-
-\appendix
-\input{appendixA}
 
 \end{document}
