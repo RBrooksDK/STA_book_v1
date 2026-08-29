@@ -1,8 +1,897 @@
 \chapter{Continuous Distributions in Practice}
 \label{ch:continuous-distributions}
 
-\section{Densities, distribution functions, and quantiles}
+Many engineering quantities are measured on a continuous scale. Response times are recorded in milliseconds, component dimensions in millimetres, temperatures in degrees, and lifetimes in hours or cycles. Although an instrument reports a finite number of digits, the underlying quantity is usually modelled as capable of taking any value in an interval. Continuous probability models provide a mathematical description of the uncertainty in such measurements.
 
-\section{Uniform, normal, and exponential models}
+This setting differs fundamentally from the discrete models developed in the previous chapter. A discrete random variable assigns probability to individual values through a probability mass function. For a continuous random variable, probabilities are assigned to intervals instead. The probability of observing any one exact value is zero, even though intervals containing that value can have positive probability. A probability density describes how probability is distributed locally, while the cumulative distribution function records the probability of falling below a threshold.
 
-\section{Model checking and QQ plots}
+The chapter develops three continuous models that occur frequently in engineering. The uniform distribution represents uncertainty spread evenly across a bounded interval. The normal distribution describes symmetric variation around a central value and is widely used for measurement error and stable process variation. The exponential distribution describes waiting times and lifetimes under a constant event-rate model, providing a direct connection with the Poisson counts introduced previously. Each distribution is an idealised model whose usefulness depends on the mechanism that generated the data and on whether its assumptions are credible.
+
+We first introduce densities, distribution functions, survival probabilities, and quantiles. We then study the uniform, normal, and exponential distributions, including standardisation and interval calculations. Finally, we consider how graphical evidence, especially quantile--quantile plots, can be used to assess whether a proposed model is a reasonable approximation. The emphasis throughout is on interpretation and model choice rather than on manual integration.
+
+\section{Continuous Random Variables, Densities, and Distribution Functions}
+\label{sec:continuous-foundations}
+
+A count changes in separate steps: a system can receive 12 or 13 requests, but not 12.4 requests. A measurement behaves differently. Between two possible response times there is, at least conceptually, another possible response time. This distinction motivates a different way of assigning probability.
+
+\subsection{Continuous random variables and support}
+
+\begin{definition}{Continuous Random Variable}
+A random variable $X$ is \textbf{continuous} if its probabilities can be described by a probability density function over intervals of real numbers. The set of values on which the density is positive is called the \textbf{support} of the distribution.
+\end{definition}
+
+The support may be bounded, such as the interval from 0 to 10 volts, or unbounded, such as all positive waiting times. It may also be the complete real line, as in the normal distribution. The support is part of the model and should agree with the possible values of the engineering quantity.
+
+Recorded data can look discrete even when the underlying model is continuous. A temperature sensor that reports to the nearest $0.1\,^{\circ}\mathrm{C}$ produces values such as $18.3$ and $18.4$, but the physical temperature is not assumed to jump between those values. The rounding belongs to the measurement system; the continuous model describes the underlying quantity.
+
+\begin{example}[ Measurement Resolution and a Continuous Model]\par
+A laser scanner reports the thickness of a steel plate to the nearest $0.01$ mm. A displayed value of $12.37$ mm represents a range of underlying thicknesses that round to that number. It does not mean that the true thickness can take only multiples of $0.01$ mm. Modelling the underlying thickness as continuous is therefore compatible with the rounded observations.
+\end{example}
+
+\subsection{Probability density functions}
+
+For a discrete random variable, the height of the PMF at $x$ is the probability $P(X=x)$. For a continuous random variable, the height of a density is not a probability. Probability is represented by area under the density over an interval.
+
+\begin{definition}{Probability Density Function}
+A function $f_X$ is a \textbf{probability density function} (PDF) for a continuous random variable $X$ if
+\[
+    f_X(x)\geq 0
+\]
+for all $x$, the total area under the density is 1,
+\[
+    \int_{-\infty}^{\infty} f_X(x)\,dx=1,
+\]
+and
+\[
+    P(a<X\leq b)=\int_a^b f_X(x)\,dx
+\]
+for any $a<b$.
+\end{definition}
+
+The integral notation expresses an area. In this book, standard distributions supply the relevant areas through their distribution functions; manual integration is not required. The notation remains important because it explains what a density means.
+
+The units of a density are the reciprocal of the units of the random variable. If $X$ is measured in hours, then $f_X(x)$ has units of probability per hour. This is another reason why a density height cannot itself be interpreted as a probability.
+
+\begin{theorem}{Basic Properties of a Continuous Distribution}
+If $X$ is continuous, then
+\[
+    P(X=x)=0
+\]
+for every exact value $x$. Consequently, for $a<b$,
+\[
+\begin{aligned}
+P(a<X<b)
+  &=P(a\leq X<b)\\
+  &=P(a<X\leq b)\\
+  &=P(a\leq X\leq b).
+\end{aligned}
+\]
+The choice of strict or inclusive endpoints does not change an interval probability.
+\end{theorem}
+
+The statement $P(X=x)=0$ does not mean that observing $x$ is impossible. It means that a single point has no area. Every realised measurement is an individual value, but probability calculations concern intervals of possible values.
+
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}
+\begin{axis}[
+    width=0.76\textwidth,
+    height=5.6cm,
+    xmin=0,xmax=4.2,
+    ymin=0,ymax=0.55,
+    axis lines=left,
+    xlabel={Completion time $t$ (hours)},
+    ylabel={Density $f_T(t)$ (per hour)},
+    xtick={0,1,2,3,4},
+    ytick={0,0.25,0.5},
+    clip=false
+]
+\addplot[very thick,staViaBlue,domain=0:4,samples=100] {x/8};
+\addplot[very thick,staViaBlue,domain=4:4.12] {0};
+\addplot[fill=staViaBlue!22,draw=none,domain=1:3,samples=80] {x/8} \closedcycle;
+\draw[dashed,staOrange,thick] (axis cs:1,0) -- (axis cs:1,0.125);
+\draw[dashed,staOrange,thick] (axis cs:3,0) -- (axis cs:3,0.375);
+\node[staDarkText] at (axis cs:2.15,0.17) {$P(1<T\leq3)$};
+\end{axis}
+\end{tikzpicture}
+\caption{For a continuous variable, the shaded area over an interval represents probability. The height of the density at one point is not a probability.}
+\label{fig:continuous-density-area}
+\end{figure}
+
+\subsection{The cumulative distribution function}
+
+The cumulative distribution function was introduced in \hyperref[sec:random-variables-pmf-cdf]{Section 3.1} for random variables in general. For a continuous variable it accumulates area under the density from the far left up to a threshold.
+
+\begin{definition}{Cumulative Distribution Function for a Continuous Variable}
+The \textbf{cumulative distribution function} (CDF) of a continuous random variable $X$ is
+\[
+    F_X(x)=P(X\leq x).
+\]
+It is related to the density by
+\[
+    F_X(x)=\int_{-\infty}^{x} f_X(t)\,dt.
+\]
+\end{definition}
+
+The letter $t$ inside the integral is a temporary variable. The argument $x$ remains the threshold at which the CDF is evaluated. A continuous CDF is non-decreasing, takes values between 0 and 1, approaches 0 far to the left, and approaches 1 far to the right.
+
+\begin{theorem}{Probabilities from a Continuous CDF}
+For a continuous random variable $X$ with CDF $F_X$,
+\[
+\begin{aligned}
+P(X\leq x)&=F_X(x),\\
+P(X>x)&=1-F_X(x),\\
+P(a<X\leq b)&=F_X(b)-F_X(a).
+\end{aligned}
+\]
+\end{theorem}
+
+These identities are the main computational tools for continuous models. They translate the position of an interval into accumulated probability without requiring direct evaluation of an area.
+
+\begin{example}[ Completion Time from a CDF]\label{ex:completion-time-cdf}\par
+Let $T$ be the time, in hours, required to complete a maintenance task. Suppose
+\[
+F_T(t)=
+\begin{cases}
+0, & t<0,\\
+t^2/16, & 0\leq t\leq4,\\
+1, & t>4.
+\end{cases}
+\]
+The probability of completing the task within one hour is
+\[
+    P(T\leq1)=F_T(1)=\frac{1}{16}=0.0625.
+\]
+The probability that the task takes more than two hours is
+\[
+    P(T>2)=1-F_T(2)=1-\frac{4}{16}=0.75.
+\]
+Finally,
+\[
+\begin{aligned}
+P(1<T\leq3)
+  &=F_T(3)-F_T(1)\\
+  &=\frac{9}{16}-\frac{1}{16}\\
+  &=0.50.
+\end{aligned}
+\]
+Thus half of all such tasks are expected to take between one and three hours under this model. The corresponding density and interval area are illustrated in \autoref{fig:continuous-density-area}.
+\end{example}
+
+\subsection{Survival functions and quantiles}
+
+Many engineering questions concern exceeding a threshold: a component surviving beyond 500 hours, a response taking longer than 100 ms, or a river level exceeding a warning limit. Such questions can be written compactly using a survival function.
+
+\begin{definition}{Survival Function}
+For a continuous random variable $X$, the \textbf{survival function} is
+\[
+    S_X(x)=P(X>x)=1-F_X(x).
+\]
+\end{definition}
+
+The word survival is especially natural for lifetime data, but the function applies to any upper-tail probability. It is often preferable to writing $1-F_X(x)$ repeatedly.
+
+A probability calculation starts from a value and finds an area. A quantile calculation reverses the direction: it starts from an accumulated probability and finds the corresponding value.
+
+\begin{definition}{Quantile}
+For $0<p<1$, a \textbf{$p$-quantile} of a continuous distribution is a value $q_p$ satisfying
+\[
+    F_X(q_p)=p.
+\]
+When the CDF is strictly increasing, the quantile is unique and can be written
+\[
+    q_p=F_X^{-1}(p).
+\]
+The median is the $0.5$-quantile, and the $100p$th percentile is $q_p$.
+\end{definition}
+
+\begin{example}[ A Service-Time Guarantee]\par
+For the maintenance-time model in \autoref{ex:completion-time-cdf}, suppose a planner wants a time limit that is sufficient for 90\% of tasks. The required value is the $0.9$-quantile. Within the support,
+\[
+    F_T(t)=\frac{t^2}{16}.
+\]
+Setting this equal to $0.9$ gives
+\[
+    \frac{q_{0.9}^2}{16}=0.9,
+    \qquad
+    q_{0.9}=4\sqrt{0.9}\approx3.79\text{ hours}.
+\]
+A planning allowance of approximately 3.79 hours is therefore exceeded by 10\% of tasks under the model.
+\end{example}
+
+Expected value and variance retain the interpretations developed for discrete random variables: they describe the centre and spread of a distribution. For the named continuous models in this chapter, their values are stated as model properties and interpreted in context. Their calculus-based derivations are not needed here.
+
+\section{The Uniform Distribution}
+\label{sec:uniform-distribution}
+
+The uniform distribution is the simplest continuous model. It describes a quantity restricted to a finite interval when equal-length subintervals are assigned equal probability. The density is constant, so probability depends only on interval length.
+
+\begin{definition}{Continuous Uniform Distribution}
+A random variable $X$ has a \textbf{continuous uniform distribution} on the interval $[a,b]$, where $a<b$, if its density is
+\[
+f_X(x)=
+\begin{cases}
+\dfrac{1}{b-a}, & a\leq x\leq b,\\
+0, & \text{otherwise}.
+\end{cases}
+\]
+We write
+\[
+    X\sim U(a,b).
+\]
+Its CDF is
+\[
+F_X(x)=
+\begin{cases}
+0, & x<a,\\
+\dfrac{x-a}{b-a}, & a\leq x\leq b,\\
+1, & x>b.
+\end{cases}
+\]
+\end{definition}
+
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}
+\begin{axis}[
+    width=0.76\textwidth,
+    height=5.2cm,
+    xmin=-0.5,xmax=10.5,
+    ymin=0,ymax=0.145,
+    axis lines=left,
+    xlabel={$x$},
+    ylabel={$f_X(x)$},
+    xtick={2,8},
+    xticklabels={$a$,$b$},
+    ytick={0.1},
+    yticklabels={$1/(b-a)$},
+    clip=false
+]
+\addplot[very thick,staViaBlue] coordinates {(-0.3,0) (2,0)};
+\addplot[very thick,staViaBlue] coordinates {(2,0.1) (8,0.1)};
+\addplot[very thick,staViaBlue] coordinates {(8,0) (10.3,0)};
+\draw[dashed,staDarkText!60] (axis cs:2,0) -- (axis cs:2,0.1);
+\draw[dashed,staDarkText!60] (axis cs:8,0) -- (axis cs:8,0.1);
+\addplot[fill=staViaBlue!20,draw=none] coordinates {(2,0) (2,0.1) (8,0.1) (8,0)} \closedcycle;
+\end{axis}
+\end{tikzpicture}
+\caption{The uniform density is constant on $[a,b]$. Its rectangular area is height $1/(b-a)$ times width $b-a$, giving total probability 1.}
+\label{fig:uniform-density}
+\end{figure}
+
+For any subinterval $[c,d]\subseteq[a,b]$,
+\[
+    P(c\leq X\leq d)=\frac{d-c}{b-a}.
+\]
+The formula compares the length of the favourable interval with the length of the complete support. This geometric interpretation is visible in \autoref{fig:uniform-density}.
+
+\begin{theorem}{Mean, Variance, and Quantiles of a Uniform Variable}
+If $X\sim U(a,b)$, then
+\[
+    E[X]=\frac{a+b}{2},
+    \qquad
+    \operatorname{Var}(X)=\frac{(b-a)^2}{12},
+\]
+and
+\[
+    q_p=a+p(b-a), \qquad 0<p<1.
+\]
+\end{theorem}
+
+The mean is the midpoint of the support. The standard deviation depends only on the width $b-a$: shifting both endpoints by the same amount shifts the mean but leaves the variability unchanged.
+
+\begin{example}[ Delivery within a Scheduled Window]\par
+A supplier commits to deliver a specialised component between 18 and 30 days after an order. Suppose that, within this interval, no delivery time is considered more likely than another. Let
+\[
+    X\sim U(18,30).
+\]
+The probability of delivery between day 22 and day 25 is
+\[
+    P(22\leq X\leq25)=\frac{25-22}{30-18}=\frac{3}{12}=0.25.
+\]
+Similarly,
+\[
+    P(X>27)=\frac{30-27}{12}=0.25.
+\]
+The mean and standard deviation are
+\[
+    E[X]=\frac{18+30}{2}=24\text{ days}
+\]
+and
+\[
+    \sqrt{\operatorname{Var}(X)}
+      =\sqrt{\frac{(30-18)^2}{12}}
+      =\sqrt{12}
+      \approx3.46\text{ days}.
+\]
+The 90th percentile is
+\[
+    q_{0.9}=18+0.9(30-18)=28.8\text{ days}.
+\]
+Thus 90\% of deliveries occur by day 28.8 under the uniform model.
+\end{example}
+
+\begin{example}[ Bounded Calibration Error]\par
+Suppose the rounding error $E$ of a digital measurement is modelled as uniform between $-0.05$ and $0.05$ units. Then
+\[
+    E\sim U(-0.05,0.05).
+\]
+The probability that the absolute error is no more than $0.02$ is
+\[
+\begin{aligned}
+P(|E|\leq0.02)
+  &=P(-0.02\leq E\leq0.02)\\
+  &=\frac{0.02-(-0.02)}{0.05-(-0.05)}\\
+  &=0.40.
+\end{aligned}
+\]
+The model is centred at zero, but only 40\% of its probability lies within $0.02$ units of zero.
+\end{example}
+
+\subsection{When is a uniform model reasonable?}
+
+A uniform model requires more than known minimum and maximum values. It asserts that intervals of equal length are equally likely throughout the support. This may be plausible for a deliberately randomised start time, an unknown phase in a repeating cycle, or rounding error under suitable conditions. It is usually not plausible for manufacturing measurements that cluster around a target or for waiting times concentrated near zero.
+
+The bounded support is also a firm assumption: the model assigns zero probability outside $[a,b]$. If values beyond the stated limits can occur, even rarely, the uniform distribution is not an adequate model for the complete process.
+
+\section{The Normal Distribution}
+\label{sec:normal-distribution}
+
+The normal distribution is central to statistics because many stable measurement processes produce approximately symmetric, bell-shaped variation. It also arises as an approximation to sums and averages of many small contributions, a connection developed formally in \hyperref[ch:sampling-distributions]{Chapter 5}. Normality is nevertheless a modelling assumption, not a default property of every continuous dataset.
+
+\begin{definition}{Normal Distribution}
+A random variable $X$ has a \textbf{normal distribution} with mean $\mu$ and variance $\sigma^2$, where $\sigma>0$, if its density is
+\[
+    f_X(x)=\frac{1}{\sigma\sqrt{2\pi}}
+    \exp\!\left[-\frac{(x-\mu)^2}{2\sigma^2}\right],
+    \qquad -\infty<x<\infty.
+\]
+We write
+\[
+    X\sim N(\mu,\sigma^2).
+\]
+\end{definition}
+
+The first parameter is the mean and the second is the variance. The standard deviation is therefore $\sigma$, not $\sigma^2$. The parameter $\mu$ determines the centre of the curve, while $\sigma$ determines its horizontal spread.
+
+\begin{theorem}{Properties of a Normal Distribution}
+If $X\sim N(\mu,\sigma^2)$, then
+\[
+    E[X]=\mu,
+    \qquad
+    \operatorname{Var}(X)=\sigma^2.
+\]
+The density is symmetric about $\mu$, so
+\[
+    P(X\leq\mu)=P(X\geq\mu)=0.5.
+\]
+Its mean, median, and mode are all equal to $\mu$.
+\end{theorem}
+
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}
+\begin{axis}[
+    width=0.80\textwidth,
+    height=6.0cm,
+    xmin=-5,xmax=7,
+    ymin=0,ymax=0.43,
+    axis lines=left,
+    xlabel={$x$},
+    ylabel={Density},
+    xtick={0,2},
+    xticklabels={$0$,$2$},
+    ytick=\empty,
+    legend style={draw=none,fill=none,at={(0.98,0.98)},anchor=north east}
+]
+\addplot[very thick,staViaBlue,domain=-4.5:4.5,samples=180] {1/sqrt(2*pi)*exp(-x^2/2)};
+\addlegendentry{$N(0,1)$}
+\addplot[very thick,staOrange,domain=-5:7,samples=180] {1/(2*sqrt(2*pi))*exp(-(x-2)^2/8)};
+\addlegendentry{$N(2,2^2)$}
+\end{axis}
+\end{tikzpicture}
+\caption{The mean determines the centre of a normal curve and the standard deviation determines its spread. Every normal density is symmetric and has total area 1.}
+\label{fig:normal-location-scale}
+\end{figure}
+
+Although the normal support is the complete real line, values far from the mean have very small probability. A normal model may therefore be useful for a positive quantity when the mean is many standard deviations above zero. It is inappropriate when the model assigns non-negligible probability to impossible values or when the data are strongly skewed.
+
+\subsection{The standard normal distribution}
+
+All normal distributions can be related to one reference distribution.
+
+\begin{definition}{Standard Normal Distribution}
+A normal random variable with mean 0 and variance 1 is called a \textbf{standard normal random variable}. It is denoted by
+\[
+    Z\sim N(0,1).
+\]
+Its CDF is written
+\[
+    \Phi(z)=P(Z\leq z).
+\]
+\end{definition}
+
+There is no elementary closed formula for $\Phi(z)$. Its values are obtained from numerical evaluation or a standard normal table. Symmetry gives the useful identity
+\[
+    \Phi(-z)=1-\Phi(z).
+\]
+
+\subsection{Using a standard normal table}
+
+A standard normal table gives cumulative left-tail probabilities $\Phi(z)=P(Z\leq z)$. In the common layout illustrated by \autoref{tab:standard-normal-excerpt}, the row supplies the units and first decimal place of $z$, while the column supplies the second decimal place. For example, $z=1.25$ is found in row $1.2$ and column $0.05$, giving
+\[
+    \Phi(1.25)=0.8944.
+\]
+
+\begin{table}[htbp]
+\centering
+\caption{Excerpt from a cumulative standard normal table. Each entry is $\Phi(z)=P(Z\leq z)$.}
+\label{tab:standard-normal-excerpt}
+\small
+\setlength{\tabcolsep}{3.2pt}
+\renewcommand{\arraystretch}{1.15}
+\begin{tabular}{@{}c*{10}{c}@{}}
+\toprule
+$z$ & $0.00$ & $0.01$ & $0.02$ & $0.03$ & $0.04$ & $0.05$ & $0.06$ & $0.07$ & $0.08$ & $0.09$ \\
+\midrule
+$1.2$ & $0.8849$ & $0.8869$ & $0.8888$ & $0.8907$ & $0.8925$ & $0.8944$ & $0.8962$ & $0.8980$ & $0.8997$ & $0.9015$ \\
+$1.5$ & $0.9332$ & $0.9345$ & $0.9357$ & $0.9370$ & $0.9382$ & $0.9394$ & $0.9406$ & $0.9418$ & $0.9429$ & $0.9441$ \\
+$1.9$ & $0.9713$ & $0.9719$ & $0.9726$ & $0.9732$ & $0.9738$ & $0.9744$ & $0.9750$ & $0.9756$ & $0.9761$ & $0.9767$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Tables often list only nonnegative $z$-scores. Negative values are then handled by symmetry. For example,
+\[
+    \Phi(-1.50)=1-\Phi(1.50)=1-0.9332=0.0668.
+\]
+Right-tail probabilities are found by complementation, and interval probabilities are found by subtracting two cumulative probabilities. The same table can be read in reverse to locate quantiles. An entry of $0.9750$, for instance, occurs at row $1.9$ and column $0.06$, so $z_{0.975}\approx1.96$.
+
+In practical analysis, statistical software such as Python is normally used to evaluate normal probabilities and quantiles. The table remains useful because it makes the direction of a probability calculation visible: the entry is a left-tail probability, while right tails and intervals still require the complement or subtraction rules. Software performs the numerical evaluation; the analyst must still standardise correctly and identify the intended event.
+
+\begin{theorem}{Standardisation of a Normal Variable}
+If $X\sim N(\mu,\sigma^2)$, then
+\[
+    Z=\frac{X-\mu}{\sigma}\sim N(0,1).
+\]
+\end{theorem}
+
+Consequently,
+\[
+    P(X\leq x)=
+    \Phi\!\left(\frac{x-\mu}{\sigma}\right).
+\]
+
+The standardised value
+\[
+    z=\frac{x-\mu}{\sigma}
+\]
+is called a \textbf{$z$-score}. It describes how many standard deviations $x$ lies above or below the mean. A positive $z$-score is above the mean, and a negative $z$-score is below it.
+
+\begin{example}[ Shaft Diameter within an Interval]\par
+The diameter $X$ of a machined shaft is modelled as
+\[
+    X\sim N(20.00,0.04^2)\text{ mm}.
+\]
+The probability that a shaft diameter is between $19.94$ mm and $20.05$ mm is found by standardising both limits:
+\[
+    z_{\mathrm{lower}}=\frac{19.94-20.00}{0.04}=-1.50,
+    \qquad
+    z_{\mathrm{upper}}=\frac{20.05-20.00}{0.04}=1.25.
+\]
+Therefore,
+\[
+\begin{aligned}
+P(19.94\leq X\leq20.05)
+  &=\Phi(1.25)-\Phi(-1.50)\\
+  &\approx0.8944-0.0668\\
+  &=0.8276.
+\end{aligned}
+\]
+Approximately 82.8\% of shafts lie in this interval if the normal model and its parameters are appropriate.
+\end{example}
+
+\subsection{Normal quantiles and percentiles}
+
+Let $z_p$ denote the $p$-quantile of the standard normal distribution, so that
+\[
+    \Phi(z_p)=p.
+\]
+If $X\sim N(\mu,\sigma^2)$, its $p$-quantile is
+\[
+    q_p=\mu+z_p\sigma.
+\]
+This formula converts a standard normal percentile to the original measurement scale.
+
+\begin{example}[ A High Measurement-Error Threshold]\par
+The output of a voltage reference is modelled as
+\[
+    X\sim N(5.00,0.02^2)\text{ V}.
+\]
+The 99th standard normal percentile is $z_{0.99}\approx2.326$. Hence
+\[
+\begin{aligned}
+q_{0.99}
+  &=5.00+2.326(0.02)\\
+  &\approx5.0465\text{ V}.
+\end{aligned}
+\]
+Under the model, 99\% of outputs are at or below approximately $5.0465$ V, and 1\% exceed that value.
+\end{example}
+
+\subsection{The empirical rule}
+
+The standard normal CDF gives three useful reference probabilities:
+\[
+\begin{aligned}
+P(\mu-\sigma\leq X\leq\mu+\sigma)&\approx0.6827,\\
+P(\mu-2\sigma\leq X\leq\mu+2\sigma)&\approx0.9545,\\
+P(\mu-3\sigma\leq X\leq\mu+3\sigma)&\approx0.9973.
+\end{aligned}
+\]
+These are often remembered as the \textbf{68--95--99.7 rule}. The rule applies to a normal distribution, not to an arbitrary dataset merely because its mean and standard deviation are known.
+
+\begin{example}[ Process Yield within Symmetric Tolerances]\par
+Return to the shaft model $X\sim N(20.00,0.04^2)$ mm. Suppose the acceptable diameter is from $19.92$ mm to $20.08$ mm. These limits are two standard deviations from the mean:
+\[
+    \frac{19.92-20.00}{0.04}=-2,
+    \qquad
+    \frac{20.08-20.00}{0.04}=2.
+\]
+Thus
+\[
+    P(19.92\leq X\leq20.08)\approx0.9545.
+\]
+The model predicts a yield of approximately 95.45\% before considering any other defect mechanism. The remaining 4.55\% is split equally between the two tails because the process is centred at the midpoint of the tolerance interval.
+\end{example}
+
+\subsection{When is a normal model reasonable?}
+
+A normal model is most plausible when variation is approximately symmetric around a stable centre and results from many small contributions rather than one dominant mechanism. Measurement error, controlled process dimensions, and aggregated environmental variation can sometimes have this form.
+
+The model should be questioned when observations are strongly skewed, bounded close to the centre, contain several distinct clusters, or include more extreme values than a normal distribution would predict. Waiting times and response times are often right-skewed and nonnegative; a raw normal model can then be misleading even if it is convenient. Graphical diagnostics are discussed in \autoref{sec:model-assessment-continuous}.
+
+\section{The Exponential Distribution}
+\label{sec:exponential-distribution}
+
+The exponential distribution models the time until an event when events occur at a constant rate and independently of how long one has already waited. Examples include the time until the next request under a stable arrival mechanism or the operating time until a sudden failure under a constant failure-rate model.
+
+\begin{definition}{Exponential Distribution}
+A nonnegative random variable $T$ has an \textbf{exponential distribution} with rate $\lambda>0$ if its density is
+\[
+f_T(t)=
+\begin{cases}
+\lambda e^{-\lambda t}, & t\geq0,\\
+0, & t<0.
+\end{cases}
+\]
+We write
+\[
+    T\sim\operatorname{Exp}(\lambda).
+\]
+Its CDF and survival function are
+\[
+F_T(t)=
+\begin{cases}
+0, & t<0,\\
+1-e^{-\lambda t}, & t\geq0,
+\end{cases}
+\]
+and
+\[
+    S_T(t)=P(T>t)=e^{-\lambda t}, \qquad t\geq0.
+\]
+\end{definition}
+
+The parameter $\lambda$ is a rate and therefore has reciprocal time units. If $t$ is measured in hours, then $\lambda$ is measured in events per hour. A larger rate produces shorter waiting times and a density that decreases more rapidly, as shown in \autoref{fig:exponential-densities}.
+
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}
+\begin{axis}[
+    width=0.80\textwidth,
+    height=5.8cm,
+    xmin=0,xmax=6,
+    ymin=0,ymax=2.1,
+    axis lines=left,
+    xlabel={Time $t$},
+    ylabel={Density $f_T(t)$},
+    ytick={0,0.5,1,2},
+    legend style={draw=none,fill=none,at={(0.98,0.98)},anchor=north east}
+]
+\addplot[very thick,staViaBlue,domain=0:6,samples=160] {0.5*exp(-0.5*x)};
+\addlegendentry{$\lambda=0.5$}
+\addplot[very thick,staOrange,domain=0:6,samples=160] {exp(-x)};
+\addlegendentry{$\lambda=1$}
+\addplot[very thick,staDarkText,domain=0:6,samples=160] {2*exp(-2*x)};
+\addlegendentry{$\lambda=2$}
+\end{axis}
+\end{tikzpicture}
+\caption{Exponential densities for three rates. Increasing $\lambda$ concentrates more probability near zero and decreases the mean waiting time.}
+\label{fig:exponential-densities}
+\end{figure}
+
+\begin{theorem}{Mean, Variance, and Quantiles of an Exponential Variable}
+If $T\sim\operatorname{Exp}(\lambda)$, then
+\[
+    E[T]=\frac{1}{\lambda},
+    \qquad
+    \operatorname{Var}(T)=\frac{1}{\lambda^2}.
+\]
+Its $p$-quantile is
+\[
+    q_p=-\frac{\ln(1-p)}{\lambda},
+    \qquad 0<p<1.
+\]
+\end{theorem}
+
+The mean and standard deviation are both $1/\lambda$. The distribution is therefore strongly right-skewed: most waiting times are relatively short, but occasional long waits remain possible.
+
+\begin{example}[ Time until the Next Server Request]\par
+A server receives requests at a stable rate of 25 requests per second. Suppose the time $T$ until the next request is modelled as
+\[
+    T\sim\operatorname{Exp}(25),
+\]
+with time measured in seconds. The mean waiting time is
+\[
+    E[T]=\frac{1}{25}=0.04\text{ s}=40\text{ ms}.
+\]
+The probability of waiting more than 10 ms is
+\[
+\begin{aligned}
+P(T>0.01)
+  &=e^{-25(0.01)}\\
+  &=e^{-0.25}\\
+  &\approx0.7788.
+\end{aligned}
+\]
+The 95th percentile is
+\[
+\begin{aligned}
+q_{0.95}
+  &=-\frac{\ln(0.05)}{25}\\
+  &\approx0.1198\text{ s}\\
+  &=119.8\text{ ms}.
+\end{aligned}
+\]
+Thus 95\% of interarrival times are no more than approximately 119.8 ms under the constant-rate model.
+\end{example}
+
+\subsection{Memorylessness}
+
+The exponential distribution has a distinctive property: after a waiting time has already elapsed, the distribution of the additional waiting time is unchanged.
+
+\begin{theorem}{Memoryless Property}
+If $T\sim\operatorname{Exp}(\lambda)$, then for $s,t\geq0$,
+\[
+    P(T>s+t\mid T>s)=P(T>t).
+\]
+The exponential distribution is said to be \textbf{memoryless}.
+\end{theorem}
+
+Memorylessness does not say that the same physical component becomes new again. It states that the model assigns the same distribution to its remaining life after survival to age $s$. This is appropriate only when the event rate does not change with age.
+
+\begin{example}[ Remaining Component Life]\par
+Suppose the operating life $T$ of an electronic component is exponentially distributed with mean 500 hours. The rate is
+\[
+    \lambda=\frac{1}{500}=0.002\text{ per hour}.
+\]
+The unconditional probability of surviving beyond 600 hours is
+\[
+    P(T>600)=e^{-0.002(600)}=e^{-1.2}\approx0.3010.
+\]
+Now suppose the component has already survived 400 hours. The probability that its total life exceeds 600 hours is the probability of surviving an additional 200 hours:
+\[
+\begin{aligned}
+P(T>600\mid T>400)
+  &=P(T>200)\\
+  &=e^{-0.002(200)}\\
+  &=e^{-0.4}\\
+  &\approx0.6703.
+\end{aligned}
+\]
+The conditional probability is larger than the unconditional probability because the component is known to have survived the first 400 hours. Under the exponential model, however, those 400 hours do not change the distribution of its additional lifetime.
+\end{example}
+
+\subsection{The connection with Poisson counts}
+
+The Poisson and exponential distributions describe two views of the same constant-rate mechanism. A Poisson variable counts events in a fixed interval; an exponential variable measures the waiting time until the next event.
+
+Suppose events occur independently at a constant rate $\lambda$ per unit time. If $N(t)$ denotes the number of events in an interval of length $t$, then
+\[
+    N(t)\sim\operatorname{Pois}(\lambda t).
+\]
+The waiting time $T$ until the first event exceeds $t$ exactly when no event occurs during the interval. Therefore,
+\[
+\begin{aligned}
+P(T>t)
+  &=P(N(t)=0)\\
+  &=e^{-\lambda t},
+\end{aligned}
+\]
+which is the exponential survival function.
+
+\begin{example}[ Counts and Waiting Times for Network Traffic]\par
+Return to a request rate of 25 per second and consider a 10 ms interval. The expected number of requests in the interval is
+\[
+    \lambda t=25(0.01)=0.25.
+\]
+Using the Poisson count model,
+\[
+    P(N(0.01)=0)=e^{-0.25}\approx0.7788.
+\]
+Using the exponential waiting-time model,
+\[
+    P(T>0.01)=e^{-25(0.01)}=e^{-0.25}\approx0.7788.
+\]
+The two calculations agree because ``no request in the next 10 ms'' and ``the next request arrives after more than 10 ms'' are the same event.
+\end{example}
+
+\subsection{Limitations of the exponential model}
+
+An exponential lifetime model assumes a constant failure rate. It can describe sudden failures caused by independent random shocks, but it does not describe gradual wear, early manufacturing defects, or changing operating conditions unless those effects are negligible over the period studied.
+
+Mechanical components often experience a changing failure rate: early failures may be caused by defects, a relatively stable middle period may follow, and wear may increase the failure rate later. A single exponential distribution cannot represent all three phases. The memoryless property is therefore both the model's defining feature and its strongest practical limitation.
+
+\section{Choosing and Assessing a Continuous Model}
+\label{sec:model-assessment-continuous}
+
+A probability distribution is not selected only because its formula is familiar. Model choice begins with the measurement scale and the mechanism that could generate the observations. Graphical evidence then helps assess whether the proposed shape is credible.
+
+\subsection{Comparing the three models}
+
+\begin{table}[htbp]
+\centering
+\caption{Interpretive comparison of the three continuous models in this chapter.}
+\label{tab:continuous-model-comparison}
+\begin{tabularx}{\textwidth}{@{}l>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X@{}}
+\toprule
+Model & Support and shape & Typical mechanism & Important limitation \\
+\midrule
+Uniform $U(a,b)$
+& Bounded; constant density
+& Equal-length intervals are equally likely
+& Known bounds alone do not justify equal density \\
+Normal $N(\mu,\sigma^2)$
+& Entire real line; symmetric and bell-shaped
+& Stable centre with many small sources of variation
+& Can assign probability to impossible values and misses skewness or heavy tails \\
+Exponential $\operatorname{Exp}(\lambda)$
+& Nonnegative; right-skewed and decreasing
+& Waiting time under a constant event rate
+& Requires memorylessness and a constant rate \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+The supports provide an immediate first check. A uniform model needs meaningful lower and upper limits. A normal model permits negative and positive values. An exponential model permits only nonnegative values and begins with its highest density at zero. The shape and mechanism must then be considered together.
+
+\begin{example}[ Selecting a Model from the Engineering Mechanism]\par
+Consider the following quantities:
+\begin{enumerate}
+    \item a random activation time selected anywhere within a 20-minute testing window;
+    \item the dimensional error from a centred and stable machining process;
+    \item the time until the next alarm under a constant alarm rate.
+\end{enumerate}
+A uniform model is plausible for the deliberately randomised activation time because equal-length parts of the window are equally likely. A normal model may be plausible for the machining error because small independent sources of variation combine around a target. An exponential model may be plausible for the waiting time because the question concerns time to an event under a constant rate.
+
+These choices are conditional, not automatic. Preferential scheduling would challenge the uniform model, tool wear could shift or skew the machining distribution, and a varying alarm rate would invalidate the exponential model.
+\end{example}
+
+\subsection{Graphical assessment}
+
+A histogram can reveal support, skewness, multiple clusters, and extreme observations. A fitted density can be compared with the histogram, but agreement depends on the selected bin widths and may hide tail discrepancies. The empirical CDF gives another comparison because it shows accumulated proportions without bins.
+
+No plot proves that a population follows a distribution. A sample contains limited information, and several models can look similar over the observed range. Graphs are diagnostics: they can expose important disagreements and indicate whether a model is a useful approximation for the intended decision.
+
+\subsection{Quantile--quantile plots}
+
+A quantile--quantile plot compares the ordered observations with quantiles expected under a proposed distribution. It is commonly abbreviated as a \textbf{QQ-plot}.
+
+\begin{definition}{Quantile--Quantile Plot}
+Let
+\[
+    x_{(1)}\leq x_{(2)}\leq\cdots\leq x_{(n)}
+\]
+be the ordered observations. For a proposed CDF $F$, define theoretical quantiles
+\[
+    q_i=F^{-1}\!\left(\frac{i-0.5}{n}\right),
+    \qquad i=1,\ldots,n.
+\]
+A \textbf{QQ-plot} displays the pairs
+\[
+    (q_i,x_{(i)}).
+\]
+If the data follow the proposed location--scale family reasonably well, the points should lie approximately on a straight line.
+\end{definition}
+
+The plotting probabilities $(i-0.5)/n$ avoid using 0 and 1, whose quantiles may be infinite. Other closely related plotting conventions exist and lead to nearly the same diagnostic for moderate or large samples.
+
+In a normal QQ-plot, an intercept reflects location and a slope reflects scale. Systematic curvature matters more than small random deviations. A few common patterns are:
+
+\begin{itemize}
+    \item approximately linear points: the normal shape may be a reasonable approximation;
+    \item an upper end bending strongly above the line: the data have a longer right tail than the fitted normal model;
+    \item both ends departing outward: the data may have heavier tails than the normal model;
+    \item separated groups or abrupt changes in slope: the data may combine different populations.
+\end{itemize}
+
+\begin{figure}[htbp]
+\centering
+\begin{minipage}{0.48\textwidth}
+\centering
+\begin{tikzpicture}
+\begin{axis}[
+    width=\textwidth,
+    height=5.5cm,
+    xmin=-1.8,xmax=1.8,
+    ymin=-1.8,ymax=1.8,
+    axis lines=left,
+    xlabel={Theoretical normal quantile},
+    ylabel={Observed quantile},
+    title={Approximately normal},
+    xtick={-1,0,1},
+    ytick={-1,0,1}
+]
+\addplot[dashed,staDarkText!60,domain=-1.6:1.6] {x};
+\addplot[only marks,mark=*,mark size=2.1pt,staViaBlue] coordinates {
+(-1.5,-1.43) (-1,-1.05) (-0.5,-0.46) (0,0.03) (0.5,0.48) (1,1.04) (1.5,1.46)};
+\end{axis}
+\end{tikzpicture}
+\end{minipage}\hfill
+\begin{minipage}{0.48\textwidth}
+\centering
+\begin{tikzpicture}
+\begin{axis}[
+    width=\textwidth,
+    height=5.5cm,
+    xmin=-1.8,xmax=1.8,
+    ymin=-1.4,ymax=2.8,
+    axis lines=left,
+    xlabel={Theoretical normal quantile},
+    ylabel={Observed quantile},
+    title={Long right tail},
+    xtick={-1,0,1},
+    ytick={-1,0,1,2}
+]
+\addplot[dashed,staDarkText!60,domain=-1.6:1.6] {x};
+\addplot[only marks,mark=*,mark size=2.1pt,staOrange] coordinates {
+(-1.5,-0.92) (-1,-0.72) (-0.5,-0.42) (0,-0.08) (0.5,0.38) (1,1.22) (1.5,2.48)};
+\end{axis}
+\end{tikzpicture}
+\end{minipage}
+\caption{Schematic normal QQ-plots. Random scatter around a line is expected, whereas systematic curvature indicates a shape discrepancy.}
+\label{fig:qq-patterns}
+\end{figure}
+\FloatBarrier
+
+\begin{example}[ A Normal QQ-Plot for Response Times]\par
+Seven ordered response times, in milliseconds, are
+\[
+    85,\ 91,\ 94,\ 98,\ 103,\ 111,\ 139.
+\]
+For $n=7$, the plotting probabilities are approximately
+\[
+    0.071,\ 0.214,\ 0.357,\ 0.500,\ 0.643,\ 0.786,\ 0.929.
+\]
+The corresponding standard normal quantiles are approximately
+\[
+    -1.47,\ -0.79,\ -0.37,\ 0,\ 0.37,\ 0.79,\ 1.47.
+\]
+Plotting the ordered response times against these theoretical quantiles would place the largest response, 139 ms, noticeably above the trend formed by the central observations. This suggests a longer right tail than a normal model would predict.
+
+With only seven observations the evidence is weak, so the plot does not establish a different distribution. It does identify the upper tail as the part of the normal approximation that deserves further investigation, especially if high response-time percentiles are important.
+\end{example}
+
+\subsection{The purpose of a model}
+
+Model adequacy depends on the question. A normal approximation that describes the centre well may still be unsuitable for estimating a very rare failure probability. An exponential model may describe short-term waiting times adequately while failing over a component's complete lifetime. The relevant range and consequence of model error should therefore guide how demanding the assessment must be.
+
+A useful model combines three forms of evidence:
+\begin{enumerate}
+    \item the support agrees with possible values;
+    \item the generating mechanism makes the distribution plausible;
+    \item the observed data do not show a practically important disagreement with the proposed shape.
+\end{enumerate}
+
+Together, these models connect engineering thresholds with probabilities for practical decisions.

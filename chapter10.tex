@@ -1,10 +1,716 @@
 \chapter{Simple Linear Regression}
 \label{ch:linear-regression}
 
-\section{The regression model and least squares}
+Fitting a straight line is computationally simple. Deciding whether the line represents a credible statistical relationship is not. A line can be calculated for almost any collection of paired numbers, including data with curvature, changing variability, influential observations, time dependence, or no scientifically meaningful connection. Regression analysis therefore begins with the question and the data-generating process, not with a fitting command.
 
-\section{Correlation and coefficient of determination}
+Simple linear regression describes how the conditional mean of a quantitative response changes with one quantitative predictor. It separates systematic linear change from residual variation, estimates the magnitude of the change, and quantifies uncertainty about both mean response and individual prediction. Scatterplots and residual plots are central because the formulas are meaningful only when the model provides a reasonable description of the observations.
 
-\section{Inference for the slope}
+This chapter develops regression from a statistical perspective. Least squares explains how the fitted line is obtained; residuals reveal what the line leaves unexplained; confidence intervals and tests quantify uncertainty about the slope; and prediction intervals acknowledge variation among individual outcomes. No matrix formulation or machine-learning workflow is required. The objective is not merely to produce a line, but to understand when it can be trusted and what conclusions it supports.
 
-\section{Residual diagnostics and prediction}
+\section{The Statistical Question and Regression Model}
+\label{sec:regression-question-model}
+
+Regression assigns different roles to the two variables.
+
+\begin{definition}{Response and Predictor}
+The \textbf{response variable}, denoted $Y$, is the quantitative outcome to be explained or predicted. The \textbf{predictor variable}, denoted $x$, is the quantitative variable used to describe systematic change in the conditional mean of $Y$.
+\end{definition}
+
+For example, a controlled server experiment may use processor load as the predictor and energy use during a one-hour run as the response. A structural test may use applied load as the predictor and beam deflection as the response. Reversing the variables changes the regression question and generally changes the fitted line.
+
+The first analysis is a scatterplot of the response against the predictor. It reveals the observed range of $x$, direction and strength of association, possible curvature, group structure, unusual observations, and regions with different variability. A numerical coefficient cannot replace this visual inspection.
+
+The population regression function describes the mean response at a given predictor value:
+\[
+E(Y\mid x)=\beta_0+\beta_1x.
+\]
+The simple linear regression model for observation $i$ is
+\[
+Y_i=\beta_0+\beta_1x_i+\varepsilon_i,
+\qquad i=1,\ldots,n,
+\]
+where $\varepsilon_i$ is the random deviation from the population line. The parameters have distinct interpretations:
+
+\begin{itemize}
+  \item $\beta_0$ is the population mean response at $x=0$; and
+  \item $\beta_1$ is the change in population mean response associated with a one-unit increase in $x$.
+\end{itemize}
+
+The slope has units of response per predictor unit. If $x$ is processor load in percentage points and $Y$ is energy use in kWh, then $\beta_1$ has units kWh per percentage point. Reporting a slope without its units removes much of its engineering meaning.
+
+The intercept may be mathematically necessary without having a useful physical interpretation. If all observed processor loads lie between 17\% and 93\%, the fitted intercept at 0\% is outside the observed range. It should not automatically be interpreted as measured idle energy. Forcing a line through the origin is justified only when scientific knowledge supports a zero response at a zero predictor value.
+
+\subsection{Study design and causal interpretation}
+
+Suppose an experiment consists of 40 one-hour server benchmark runs. Target processor-load settings are assigned in random order, environmental conditions are held as stable as possible, and each run produces a load measurement and an energy measurement. Randomising the run order reduces the risk that warm-up, drift, or another time trend is confused with load.
+
+This design can support a causal interpretation within the tested system if the load intervention, measurement process, and run independence are credible. In observational data, a regression slope ordinarily describes association. An omitted variable may influence both predictor and response, and a high $R^2$ does not remove that concern. Generalisation beyond the observed machines, workloads, and operating conditions requires additional design justification.
+
+\section{Least Squares, Fitted Values, and Residual Variation}
+\label{sec:regression-least-squares}
+
+The population parameters $\beta_0$ and $\beta_1$ are unknown. A sample produces the fitted line
+\[
+\hat y=\hat\beta_0+\hat\beta_1x.
+\]
+
+\begin{definition}{Fitted Value and Residual}
+For observation $(x_i,y_i)$, the \textbf{fitted value} is
+\[
+\hat y_i=\hat\beta_0+\hat\beta_1x_i.
+\]
+The \textbf{residual} is
+\[
+e_i=y_i-\hat y_i.
+\]
+It is the observed vertical difference between the response and the fitted line.
+\end{definition}
+
+Residuals estimate the unobserved model errors, but they are not identical objects. An error $\varepsilon_i$ is defined relative to the unknown population line; a residual $e_i$ is calculated relative to the fitted sample line.
+
+Ordinary least squares chooses the intercept and slope to minimise the residual sum of squares
+\[
+SS_{\text{res}}
+=\sum_{i=1}^{n}(y_i-\hat y_i)^2
+=\sum_{i=1}^{n}e_i^2.
+\]
+Squaring prevents positive and negative residuals from cancelling and gives relatively large discrepancies greater influence on the fit.
+
+Define the centred sums
+\[
+S_{xx}=\sum_{i=1}^{n}(x_i-\bar x)^2,
+\qquad
+S_{xy}=\sum_{i=1}^{n}(x_i-\bar x)(y_i-\bar y).
+\]
+
+\begin{theorem}{Least-Squares Estimates}
+Provided $S_{xx}>0$, the least-squares slope and intercept are
+\[
+\hat\beta_1=\frac{S_{xy}}{S_{xx}},
+\qquad
+\hat\beta_0=\bar y-\hat\beta_1\bar x.
+\]
+The fitted line passes through $(\bar x,\bar y)$, and its residuals satisfy
+\[
+\sum_{i=1}^{n}e_i=0
+\qquad\text{and}\qquad
+\sum_{i=1}^{n}x_i e_i=0.
+\]
+\end{theorem}
+
+The condition $S_{xx}>0$ means that the predictor values cannot all be identical. The second residual identity expresses the least-squares balance between residuals and the predictor; it does not imply that observations are independent or that the linear model is correct.
+
+\begin{example}[ Energy Use in Controlled Server Benchmarks]\par
+For the 40 benchmark runs, let $x$ be processor load in percentage points and let $y$ be energy use in kWh during the one-hour run. The sample summaries are
+\[
+n=40,
+\qquad
+\bar x=53.370,
+\qquad
+\bar y=32.343,
+\]
+\[
+S_{xx}=20809.410,
+\qquad
+S_{xy}=8659.564.
+\]
+The fitted slope is
+\[
+\hat\beta_1
+=\frac{8659.564}{20809.410}
+\approx0.4161\text{ kWh per percentage point},
+\]
+and the intercept is
+\[
+\hat\beta_0
+=32.343-0.4161(53.370)
+\approx10.134\text{ kWh}.
+\]
+Thus the fitted line is
+\[
+\hat y=10.134+0.4161x.
+\]
+Within the tested range, ten additional percentage points of processor load are associated with approximately
+\[
+10(0.4161)=4.161\text{ kWh}
+\]
+higher mean energy use. The intercept is an algebraic anchor for the line; it is not a measured estimate of idle energy because $x=0$ lies outside the observed range.
+\end{example}
+
+\begin{figure}[htbp]
+\centering
+\begin{minipage}{0.49\textwidth}
+\centering
+\begin{tikzpicture}
+\begin{axis}[
+  width=\linewidth,height=6.0cm,
+  xmin=14,xmax=96,ymin=10,ymax=56,
+  xlabel={Processor load (\%)},
+  ylabel={Energy use (kWh)},
+  title={Observed responses and fitted line},
+  title style={font=\small\bfseries},
+  tick label style={font=\scriptsize},
+  label style={font=\scriptsize},
+  ymajorgrids=true,
+  grid style={staDarkText!10}
+]
+\addplot[only marks,mark=*,mark size=1.45pt,staViaBlue]
+coordinates {
+(17.30,13.591) (17.54,19.260) (19.82,20.631) (20.68,22.873)
+(21.14,16.008) (25.08,22.864) (26.08,21.472) (27.66,27.711)
+(30.86,21.128) (32.90,20.617) (34.53,26.871) (35.79,22.604)
+(37.51,21.723) (40.67,30.641) (44.11,30.267) (42.69,17.332)
+(45.80,26.181) (48.37,26.502) (50.35,33.387) (51.80,36.839)
+(56.80,40.788) (56.94,36.109) (57.25,29.920) (58.15,30.138)
+(62.18,32.293) (66.13,38.844) (66.56,41.724) (65.53,30.189)
+(68.63,40.212) (72.40,42.761) (75.51,41.800) (76.37,52.349)
+(78.36,43.650) (81.44,43.061) (83.64,45.918) (83.29,41.746)
+(86.60,41.062) (86.90,46.501) (88.73,49.757) (92.71,46.406)
+};
+\addplot[staOrange,very thick,domain=15:95,samples=2]
+  {10.134021+0.416137*x};
+\end{axis}
+\end{tikzpicture}
+\end{minipage}\hfill
+\begin{minipage}{0.49\textwidth}
+\centering
+\begin{tikzpicture}
+\begin{axis}[
+  width=\linewidth,height=6.0cm,
+  xmin=14,xmax=96,ymin=-12,ymax=12,
+  xlabel={Processor load (\%)},
+  ylabel={Residual (kWh)},
+  title={Residuals against processor load},
+  title style={font=\small\bfseries},
+  tick label style={font=\scriptsize},
+  label style={font=\scriptsize},
+  ymajorgrids=true,
+  grid style={staDarkText!10}
+]
+\addplot[staDarkText!55,line width=0.8pt,domain=15:95,samples=2] {0};
+\addplot[only marks,mark=*,mark size=1.45pt,staViaBlue]
+coordinates {
+(17.30,-3.742) (17.54,1.827) (19.82,2.249) (20.68,4.133)
+(21.14,-2.923) (25.08,2.293) (26.08,0.485) (27.66,6.067)
+(30.86,-1.848) (32.90,-3.208) (34.53,2.368) (35.79,-2.424)
+(37.51,-4.020) (40.67,3.583) (44.11,1.777) (42.69,-10.567)
+(45.80,-3.012) (48.37,-3.761) (50.35,2.300) (51.80,5.149)
+(56.80,7.017) (56.94,2.280) (57.25,-4.038) (58.15,-4.194)
+(62.18,-3.716) (66.13,1.191) (66.56,3.892) (65.53,-7.214)
+(68.63,1.519) (72.40,2.499) (75.51,0.243) (76.37,10.435)
+(78.36,0.907) (81.44,-0.963) (83.64,0.978) (83.29,-3.048)
+(86.60,-5.109) (86.90,0.205) (88.73,2.699) (92.71,-2.308)
+};
+\end{axis}
+\end{tikzpicture}
+\end{minipage}
+\caption{The fitted line summarises the increasing mean response. The residual plot displays the deviations on their original energy scale and makes model checking possible.}
+\label{fig:regression-fit-residuals}
+\end{figure}
+
+\FloatBarrier
+
+The residual sum of squares for the benchmark data is
+\[
+SS_{\text{res}}=653.365\text{ kWh}^2.
+\]
+Because two parameters have been estimated, the residual variance is estimated with $n-2$ degrees of freedom:
+\[
+s^2=\frac{SS_{\text{res}}}{n-2}.
+\]
+The residual standard deviation is therefore
+\[
+s
+=\sqrt{\frac{653.365}{38}}
+\approx4.147\text{ kWh}.
+\]
+It describes the typical vertical scale of unexplained variation around the fitted line. Unlike $R^2$, it retains the units of the response.
+
+\section{Is a Linear Model Credible?}
+\label{sec:regression-diagnostics}
+
+Least squares always returns coefficients when the predictor varies, but statistical interpretation requires a credible model. \autoref{tab:regression-conditions} summarises the main conditions.
+
+\begin{table}[htbp]
+\centering
+\caption{Conditions to examine in a simple linear regression analysis.}
+\label{tab:regression-conditions}
+\begin{tabularx}{\textwidth}{@{}l>{\raggedright\arraybackslash}X@{}}
+\toprule
+Condition & Practical question \\
+\midrule
+Linear conditional mean & Does a straight line adequately describe how the mean response changes across the observed predictor range? \\
+Independent errors & Could repeated units, clusters, run order, process drift, or time dependence relate the errors? \\
+Constant error variance & Is the vertical spread around the line reasonably similar across predictor values? \\
+Approximately normal errors & For small-sample inference, are the errors reasonably compatible with a normal distribution? \\
+Credible measurement & Are response and predictor measured consistently, without censoring, changing instruments, or substantial predictor error? \\
+Representative or randomised design & Does the design support the intended population, operating range, and causal or associational interpretation? \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection{Residual plots reveal model structure}
+
+A useful residual plot places residuals on the vertical axis and fitted values or predictor values on the horizontal axis. For a credible linear mean and constant variance, the residuals should form an approximately patternless horizontal cloud around zero. The plot does not need to look perfectly random, but systematic structure requires explanation.
+
+Curvature indicates that the conditional mean is not adequately represented by one straight line. A funnel shape indicates that response variability changes with the predictor. A sequence of positive residuals followed by negative residuals in collection order may indicate drift or dependence even if a residual-versus-fitted plot looks acceptable.
+
+\begin{figure}[htbp]
+\centering
+\begin{minipage}{0.32\textwidth}
+\centering
+\begin{tikzpicture}
+\begin{axis}[
+  width=\linewidth,height=4.5cm,
+  xmin=0.5,xmax=8.5,ymin=-3,ymax=3,
+  xtick=\empty,ytick={-2,0,2},
+  xlabel={Fitted value},ylabel={Residual},
+  title={Patternless},
+  title style={font=\scriptsize\bfseries},
+  label style={font=\scriptsize},tick label style={font=\scriptsize}
+]
+\addplot[staDarkText!50,domain=0.5:8.5] {0};
+\addplot[only marks,mark=*,mark size=1.6pt,staViaBlue]
+coordinates {(1,-0.7) (2,0.5) (3,-0.2) (4,0.9) (5,-0.8) (6,0.2) (7,0.6) (8,-0.4)};
+\end{axis}
+\end{tikzpicture}
+\end{minipage}\hfill
+\begin{minipage}{0.32\textwidth}
+\centering
+\begin{tikzpicture}
+\begin{axis}[
+  width=\linewidth,height=4.5cm,
+  xmin=0.5,xmax=8.5,ymin=-3,ymax=3,
+  xtick=\empty,ytick={-2,0,2},
+  xlabel={Fitted value},
+  title={Curvature},
+  title style={font=\scriptsize\bfseries},
+  label style={font=\scriptsize},tick label style={font=\scriptsize}
+]
+\addplot[staDarkText!50,domain=0.5:8.5] {0};
+\addplot[only marks,mark=*,mark size=1.6pt,staViaBlue]
+coordinates {(1,2.2) (2,0.6) (3,-0.5) (4,-1.2) (5,-1.1) (6,-0.4) (7,0.7) (8,2.1)};
+\end{axis}
+\end{tikzpicture}
+\end{minipage}\hfill
+\begin{minipage}{0.32\textwidth}
+\centering
+\begin{tikzpicture}
+\begin{axis}[
+  width=\linewidth,height=4.5cm,
+  xmin=0.5,xmax=8.5,ymin=-3,ymax=3,
+  xtick=\empty,ytick={-2,0,2},
+  xlabel={Fitted value},
+  title={Increasing spread},
+  title style={font=\scriptsize\bfseries},
+  label style={font=\scriptsize},tick label style={font=\scriptsize}
+]
+\addplot[staDarkText!50,domain=0.5:8.5] {0};
+\addplot[only marks,mark=*,mark size=1.6pt,staViaBlue]
+coordinates {(1,-0.2) (2,0.3) (3,-0.5) (4,0.8) (5,-1.1) (6,1.5) (7,-2.0) (8,2.5)};
+\end{axis}
+\end{tikzpicture}
+\end{minipage}
+\caption{Illustrative residual patterns. A patternless cloud supports the linear constant-variance description; curvature and increasing spread indicate different model problems.}
+\label{fig:residual-patterns}
+\end{figure}
+
+\FloatBarrier
+
+The benchmark residuals in \autoref{fig:regression-fit-residuals} show no obvious curvature or funnel shape, but two runs have residuals near $-10.6$ and $10.4$ kWh. Their measurements and experimental logs should be checked. They should not be removed merely because they are unusual.
+
+\subsection{Normality and the role of a QQ-plot}
+
+Normality concerns the model errors around the line, not the marginal distributions of processor load or energy use. A normal quantile plot of the residuals can reveal strong skewness, heavy tails, and unusual observations. The normal assumption is needed for the exact small-sample $t$ results developed later; it is not required to calculate the least-squares line itself.
+
+Formal normality tests are not automatic gatekeepers. With small samples they may miss serious deviations, while large samples may make immaterial departures statistically detectable. Design information, residual plots, QQ-plots, and the influence of unusual observations should be considered together.
+
+\subsection{Outliers, leverage, and influence}
+
+Three related ideas must be distinguished.
+
+\begin{table}[htbp]
+\centering
+\caption{Unusual observations in regression.}
+\label{tab:regression-unusual-observations}
+\begin{tabularx}{\textwidth}{@{}l>{\raggedright\arraybackslash}X@{}}
+\toprule
+Term & Statistical meaning \\
+\midrule
+Response outlier & An observation with a large vertical discrepancy from the fitted line, usually reflected in a large residual. \\
+High leverage & An observation with a predictor value far from the centre of the observed predictor values, giving it unusual potential to affect the line. \\
+Influential observation & An observation whose removal or modification would change fitted coefficients, predictions, or conclusions substantially. \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+A high-leverage observation can pull the line toward itself and consequently have a modest residual. Residual size alone therefore does not measure influence. Statistical software can report standardised residuals, leverage, and influence diagnostics, but the response is an investigation: verify data, understand the operating condition, compare analyses transparently, and retain scientifically valid observations unless there is a defensible reason to exclude them.
+
+\section{Variation, Correlation, and the Coefficient of Determination}
+\label{sec:regression-r-squared}
+
+The fitted slope describes change in the original measurement units, but two unitless summaries are also commonly reported: Pearson's correlation $r$ and the coefficient of determination $R^2$. They answer different questions. Correlation describes the direction and strength of a \emph{linear association}; $R^2$ describes how much of the observed squared variation in the response is represented by the fitted line. Neither quantity can replace the scatterplot, residual diagnostics, or the slope with its units.
+
+\subsection{Correlation: direction and strength of linear association}
+
+Pearson's sample correlation is
+\[
+r
+=\frac{S_{xy}}{\sqrt{S_{xx}S_{yy}}},
+\qquad
+S_{yy}=\sum_{i=1}^{n}(y_i-\bar y)^2.
+\]
+The numerator $S_{xy}$ compares paired deviations from the two sample means. It tends to be positive when above-average values of $x$ occur with above-average values of $y$, and below-average values of $x$ occur with below-average values of $y$. It tends to be negative when above-average values of one variable occur with below-average values of the other. Dividing by $\sqrt{S_{xx}S_{yy}}$ standardises this co-movement, so the result has no units and always satisfies
+\[
+-1\leq r\leq 1.
+\]
+
+The sign gives the direction of the linear association:
+\begin{itemize}
+    \item $r>0$ indicates that larger predictor values tend to accompany larger response values;
+    \item $r<0$ indicates that larger predictor values tend to accompany smaller response values; and
+    \item $r=0$ indicates no sample \emph{linear} association.
+\end{itemize}
+The magnitude $|r|$ describes how closely the observations follow some straight line. Values of $|r|$ near $1$ indicate a tight linear pattern, while values near $0$ indicate a weak linear pattern. The endpoints $r=1$ and $r=-1$ occur only when every observation lies exactly on a straight line with positive or negative slope, respectively.
+
+There is no universal boundary at which a correlation becomes ``strong.'' Its practical meaning depends on measurement quality, natural variability, the engineering context, and the consequences of the decision. A correlation of $0.60$ may be valuable in a noisy field study, while a correlation of $0.95$ may be inadequate for a precision calibration system. Interpretation should therefore combine the numerical value with the scatterplot and the intended use.
+
+For the benchmark experiment,
+\[
+r=0.920.
+\]
+This indicates a strong positive linear association within the tested processor-load range: runs with greater load generally use more energy, and the observations lie reasonably close to an increasing straight line. It does \emph{not} mean that energy use increases by $0.920$ kWh for each percentage point of load. Correlation has no units; the fitted slope, $0.416$ kWh per percentage point, measures that change.
+
+Correlation is symmetric: the correlation between $x$ and $y$ equals the correlation between $y$ and $x$. Regression is directional because it describes the conditional mean of a designated response using a designated predictor. Correlation is also sensitive to unusual observations, clusters, and the observed range of the variables. Restricting a study to a narrow predictor range can reduce $|r|$, while combining distinct groups can create or conceal an association. Finally, $r\approx0$ does not imply independence or the absence of a relationship; a strong curved relationship can have correlation near zero.
+
+\subsection{Coefficient of determination: reduction in squared variation}
+
+Before using the predictor, a simple baseline prediction for every response is the sample mean $\bar y$. Its total squared prediction error is
+\[
+SS_{\text{total}}
+=\sum_{i=1}^{n}(y_i-\bar y)^2,
+\]
+which measures the observed squared variation of the responses around their mean. Regression replaces the single baseline $\bar y$ with fitted values $\hat y_i$. The variation represented by the fitted line and the variation left in its residuals are
+\[
+SS_{\text{model}}
+=\sum_{i=1}^{n}(\hat y_i-\bar y)^2,
+\qquad
+SS_{\text{res}}
+=\sum_{i=1}^{n}(y_i-\hat y_i)^2.
+\]
+
+\begin{theorem}{Regression Sum-of-Squares Identity}
+For an ordinary least-squares regression with an intercept,
+\[
+SS_{\text{total}}
+=SS_{\text{model}}+SS_{\text{res}}.
+\]
+The coefficient of determination is
+\[
+R^2
+=\frac{SS_{\text{model}}}{SS_{\text{total}}}
+=1-\frac{SS_{\text{res}}}{SS_{\text{total}}}.
+\]
+\end{theorem}
+
+Thus $R^2$ compares the fitted regression with the mean-only baseline. It has two equivalent sample interpretations:
+\begin{itemize}
+    \item $R^2$ is the proportion of the observed total squared variation in the response represented by the fitted line; and
+    \item $R^2$ is the proportional reduction in squared prediction error obtained by using the fitted line instead of predicting $\bar y$ for every observation.
+\end{itemize}
+For ordinary least-squares regression with an intercept, $0\leq R^2\leq1$. A value near $0$ means that the fitted line improves little on the mean-only baseline, whereas a value near $1$ means that the observations lie close to the fitted line relative to their total variation around $\bar y$.
+
+For the benchmark experiment,
+\[
+SS_{\text{total}}=4256.930,
+\qquad
+SS_{\text{model}}=3603.565,
+\qquad
+SS_{\text{res}}=653.365,
+\]
+so
+\[
+R^2
+=1-\frac{653.365}{4256.930}
+\approx0.847.
+\]
+Approximately $84.7\%$ of the observed squared variation in energy use is represented by the fitted linear association with processor load. Equivalently, the fitted line reduces the squared errors by $84.7\%$ relative to predicting the same mean energy use for every benchmark run. The remaining $15.3\%$ is residual squared variation around the line.
+
+For simple least-squares regression with one predictor and an intercept,
+\[
+R^2=r^2.
+\]
+The identity explains why $0.920^2\approx0.847$. Squaring removes the sign, so $R^2$ alone does not reveal whether the association is increasing or decreasing. For example, correlations of $0.920$ and $-0.920$ both give $R^2\approx0.847$; the slope or correlation must provide the direction.
+
+The phrase ``variation explained by the model'' is often used for $R^2$, but \emph{explained} means accounted for by the fitted values in this algebraic decomposition. It does not establish a causal mechanism. Nor does $R^2=0.847$ mean that the model is $84.7\%$ correct, that $84.7\%$ of individual outcomes are predicted correctly, or that processor load causally produces exactly $84.7\%$ of the energy variation.
+
+A high $R^2$ does not guarantee a credible model: curvature, changing variance, dependence, confounding, or one influential observation may remain. A low $R^2$ does not make a relationship useless: a precisely estimated slope can still describe an important average change when individual responses are naturally variable. Because $R^2$ is unitless and relative, it should be reported with the slope, its uncertainty, residual diagnostics, and the residual standard deviation. In the benchmark, $R^2=0.847$ describes relative fit, while $s=4.15$ kWh describes the typical unexplained vertical variation in the response's original units.
+
+\begin{table}[htbp]
+\centering
+\caption{Distinct interpretations of three regression summaries.}
+\label{tab:regression-summary-interpretations}
+\begin{tabularx}{\textwidth}{@{}l>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X@{}}
+\toprule
+Quantity & What it describes & What it does not establish \\
+\midrule
+$r$ & Direction and strength of sample linear association & Slope, prediction error, causation, or absence of nonlinear association \\
+$R^2$ & Proportion of sample squared response variation represented by the fitted line & Model correctness, causal explanation, or future predictive accuracy \\
+$s$ & Typical residual variation in response units & Proportion of variation represented or direction of association \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\newpage
+\subsection{Connection to the ANOVA $F$ test}
+
+With one predictor, regression assigns one degree of freedom to the fitted linear change and $n-2$ degrees of freedom to residual variation. The regression $F$ statistic is
+\[
+F
+=\frac{SS_{\text{model}}/1}{SS_{\text{res}}/(n-2)}.
+\]
+For the same two-sided null hypothesis $H_0:\beta_1=0$, this statistic equals the square of the slope $t$ statistic:
+\[
+F=t^2.
+\]
+The equality connects regression to the variance-comparison logic of the preceding chapter. In simple regression, a separate global $F$ calculation adds no new decision beyond the two-sided slope test.
+
+\section{Inference for the Population Slope}
+\label{sec:regression-slope-inference}
+
+Under the classical regression model, the errors are independent with
+\[
+E(\varepsilon_i)=0,
+\qquad
+\operatorname{Var}(\varepsilon_i)=\sigma^2,
+\]
+and are normally distributed for exact small-sample inference. The residual standard deviation $s$ estimates the unknown error standard deviation $\sigma$.
+
+The estimated standard error of the fitted slope is
+\[
+\operatorname{SE}(\hat\beta_1)
+=\frac{s}{\sqrt{S_{xx}}}.
+\]
+Greater residual variation increases slope uncertainty, while a wider spread of credible predictor values increases the information available about the slope.
+
+\begin{theorem}{Confidence Interval and Test for a Regression Slope}
+Under the classical simple linear regression assumptions, a $100(1-\alpha)\%$ confidence interval for $\beta_1$ is
+\[
+\hat\beta_1
+\pm
+t_{n-2,1-\alpha/2}
+\operatorname{SE}(\hat\beta_1).
+\]
+To test
+\[
+H_0:\beta_1=\beta_{1,0},
+\]
+use
+\[
+t_{\mathrm{obs}}
+=\frac{\hat\beta_1-\beta_{1,0}}
+{\operatorname{SE}(\hat\beta_1)},
+\]
+with $n-2$ degrees of freedom. The common no-linear-association claim has $\beta_{1,0}=0$.
+\end{theorem}
+
+The test asks how extreme the estimated slope would be if the stated population slope and model assumptions were true. Rejecting $H_0:\beta_1=0$ provides evidence of a linear association. It does not prove a causal effect and does not rule out additional nonlinear structure.
+
+\newpage
+\begin{example}[ Inference for the Energy--Load Slope]\par
+For the benchmark experiment,
+\[
+s=4.1465\text{ kWh},
+\qquad
+S_{xx}=20809.410,
+\]
+so
+\[
+\operatorname{SE}(\hat\beta_1)
+=\frac{4.1465}{\sqrt{20809.410}}
+\approx0.02874
+\]
+kWh per percentage point. Testing
+\[
+H_0:\beta_1=0
+\qquad\text{against}\qquad
+H_1:\beta_1\neq0
+\]
+gives
+\[
+t_{\mathrm{obs}}
+=\frac{0.4161}{0.02874}
+\approx14.48
+\]
+with 38 degrees of freedom and $p<0.0001$. With $t_{38,0.975}\approx2.024$, the 95\% confidence interval is
+\[
+0.4161\pm2.024(0.02874)
+=[0.358,0.474]
+\]
+kWh per percentage point.
+
+The data provide strong evidence of a positive linear association under the benchmark design. More importantly, the interval estimates that ten additional percentage points of load increase mean energy use by between
+\[
+10(0.358)=3.58\text{ kWh}
+\]
+and
+\[
+10(0.474)=4.74\text{ kWh}
+\]
+under the tested conditions. Operational importance depends on workload duration, energy price, thermal constraints, and whether the benchmark represents production operation.
+\end{example}
+
+\section{Mean Response and Individual Prediction}
+\label{sec:regression-prediction-intervals}
+
+At a predictor value $x_0$, the fitted mean response is
+\[
+\hat y_0=\hat\beta_0+\hat\beta_1x_0.
+\]
+Two different uncertainties can be considered. A confidence interval estimates the population mean response $E(Y\mid x_0)$. A prediction interval describes a new individual response $Y_{\mathrm{new}}$ at $x_0$ under the same model and operating conditions.
+
+\newpage
+\begin{theorem}{Mean-Response and Prediction Intervals}
+Under the classical simple linear regression assumptions, a $100(1-\alpha)\%$ confidence interval for the mean response at $x_0$ is
+\[
+\hat y_0
+\pm
+t_{n-2,1-\alpha/2}s
+\sqrt{
+\frac{1}{n}
++\frac{(x_0-\bar x)^2}{S_{xx}}
+}.
+\]
+A $100(1-\alpha)\%$ prediction interval for one new response at $x_0$ is
+\[
+\hat y_0
+\pm
+t_{n-2,1-\alpha/2}s
+\sqrt{
+1+\frac{1}{n}
++\frac{(x_0-\bar x)^2}{S_{xx}}
+}.
+\]
+\end{theorem}
+
+The additional $1$ in the prediction standard error represents the variability of a new observation around its population mean. Consequently, a prediction interval is wider than a confidence interval for the mean response at the same $x_0$.
+
+Both intervals are narrowest near $\bar x$ and widen as $x_0$ moves away from the centre of the observed predictor values. The formulas describe uncertainty under the fitted model; they do not make extrapolation far outside the observed range reliable.
+
+\begin{example}[ Mean Energy and a New Run at 70\% Load]\par
+At $x_0=70$\% processor load, the fitted energy use is
+\[
+\hat y_0
+=10.134+0.4161(70)
+\approx39.264\text{ kWh}.
+\]
+For the mean response, the estimated standard error is
+\[
+4.1465
+\sqrt{
+\frac{1}{40}
++\frac{(70-53.37)^2}{20809.410}
+}
+\approx0.8114\text{ kWh}.
+\]
+The 95\% confidence interval for mean energy use at 70\% load is therefore
+\[
+39.264\pm2.024(0.8114)
+=[37.62,40.91]\text{ kWh}.
+\]
+
+For a new individual run, the estimated prediction standard error is
+\[
+4.1465
+\sqrt{
+1+\frac{1}{40}
++\frac{(70-53.37)^2}{20809.410}
+}
+\approx4.2252\text{ kWh},
+\]
+giving the 95\% prediction interval
+\[
+39.264\pm2.024(4.2252)
+=[30.71,47.82]\text{ kWh}.
+\]
+The confidence interval addresses the mean over conceptually repeated runs at 70\% load. The prediction interval is the relevant interval for one future run, whose energy use can vary substantially around that mean.
+\end{example}
+
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}
+\begin{axis}[
+  width=0.88\textwidth,height=7.3cm,
+  xmin=14,xmax=96,ymin=5,ymax=61,
+  xlabel={Processor load (\%)},
+  ylabel={Energy use (kWh)},
+  tick label style={font=\small},
+  label style={font=\small},
+  ymajorgrids=true,
+  grid style={staDarkText!10},
+  legend style={at={(0.02,0.98)},anchor=north west,font=\scriptsize,draw=none,fill=white,fill opacity=0.85,text opacity=1}
+]
+\addplot[only marks,mark=*,mark size=1.35pt,staDarkText!45]
+coordinates {
+(17.30,13.591) (17.54,19.260) (19.82,20.631) (20.68,22.873)
+(21.14,16.008) (25.08,22.864) (26.08,21.472) (27.66,27.711)
+(30.86,21.128) (32.90,20.617) (34.53,26.871) (35.79,22.604)
+(37.51,21.723) (40.67,30.641) (44.11,30.267) (42.69,17.332)
+(45.80,26.181) (48.37,26.502) (50.35,33.387) (51.80,36.839)
+(56.80,40.788) (56.94,36.109) (57.25,29.920) (58.15,30.138)
+(62.18,32.293) (66.13,38.844) (66.56,41.724) (65.53,30.189)
+(68.63,40.212) (72.40,42.761) (75.51,41.800) (76.37,52.349)
+(78.36,43.650) (81.44,43.061) (83.64,45.918) (83.29,41.746)
+(86.60,41.062) (86.90,46.501) (88.73,49.757) (92.71,46.406)
+};
+\addlegendentry{observations}
+\addplot[staOrange,very thick,domain=17:93,samples=100]
+  {10.134021+0.416137*x};
+\addlegendentry{fitted mean}
+\addplot[staViaBlue,dashed,line width=1.0pt,domain=17:93,samples=100]
+  {10.134021+0.416137*x-2.024394*4.146543*sqrt(0.025+(x-53.37)^2/20809.4098)};
+\addlegendentry{95\% mean-response limits}
+\addplot[staViaBlue,dashed,line width=1.0pt,domain=17:93,samples=100,forget plot]
+  {10.134021+0.416137*x+2.024394*4.146543*sqrt(0.025+(x-53.37)^2/20809.4098)};
+\addplot[staOrange,densely dotted,line width=1.1pt,domain=17:93,samples=100]
+  {10.134021+0.416137*x-2.024394*4.146543*sqrt(1.025+(x-53.37)^2/20809.4098)};
+\addlegendentry{95\% prediction limits}
+\addplot[staOrange,densely dotted,line width=1.1pt,domain=17:93,samples=100,forget plot]
+  {10.134021+0.416137*x+2.024394*4.146543*sqrt(1.025+(x-53.37)^2/20809.4098)};
+\end{axis}
+\end{tikzpicture}
+\caption{The mean-response limits quantify uncertainty about the regression line. The wider prediction limits include the additional variation of one new benchmark run.}
+\label{fig:regression-confidence-prediction-bands}
+\end{figure}
+
+\FloatBarrier
+
+\section{Choosing and Reporting a Regression Analysis}
+\label{sec:regression-reporting}
+
+A defensible analysis gives priority to the statistical question, the observational units, and the model diagnostics. Coefficients and $p$-values are interpreted only after the data and residuals have been examined.
+
+\begin{custombox}{Eight-step statistical regression workflow}
+A practical simple linear regression analysis proceeds in this order:
+\begin{enumerate}
+  \item state the target population, observational unit, quantitative response, predictor, and intended operating range;
+  \item explain how observations were sampled or experimental settings assigned, including run order, repeated units, and possible confounding;
+  \item inspect the scatterplot for direction, linearity, unusual observations, clusters, and gaps in the predictor range;
+  \item fit the least-squares line and interpret slope and intercept with units, without assigning meaning to an implausible intercept;
+  \item examine residual-versus-fitted, residual-versus-order, and QQ-plots, together with leverage and influence diagnostics;
+  \item report the slope estimate, confidence interval, test statistic, $p$-value, residual standard deviation, and $R^2$;
+  \item when prediction is required, distinguish a confidence interval for the mean response from a prediction interval for a new observation and avoid unsupported extrapolation; and
+  \item communicate practical importance, uncertainty, model limitations, and whether the design supports association or causation.
+\end{enumerate}
+\end{custombox}
+
+\newpage
+For the benchmark experiment, a compact report could read:
+
+\begin{quote}
+Across 40 controlled one-hour benchmark runs performed in random order, mean energy use increased linearly with processor load. The estimated increase was 0.416 kWh per percentage point, 95\% CI $[0.358,0.474]$, $t(38)=14.48$, $p<0.0001$. The fitted line accounted for 84.7\% of the observed squared variation, and the residual standard deviation was 4.15 kWh. Residual plots showed no clear curvature or changing spread, although two runs with comparatively large residuals require audit. At 70\% load, estimated mean energy use was 39.26 kWh, 95\% CI $[37.62,40.91]$, while the 95\% prediction interval for one new run was $[30.71,47.82]$ kWh. Conclusions are limited to systems and workloads adequately represented by the benchmark design.
+\end{quote}
+
+Statistical software normally performs the calculations and produces diagnostic plots, but it cannot determine whether runs are independent, whether a predictor was controlled or merely observed, whether an unusual value is an error, or whether extrapolation is scientifically reasonable. Those decisions require knowledge of the study and engineering context.
+
+Simple linear regression is therefore not merely a procedure for drawing a line. It is a model for a conditional mean, accompanied by residual variation, assumptions, diagnostics, and uncertainty. The next chapter turns from quantitative responses to categorical counts and develops chi-square methods for goodness of fit and association.

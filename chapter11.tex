@@ -1,10 +1,466 @@
 \chapter{Categorical Data and Chi-Square Tests}
 \label{ch:categorical-data}
 
-\section{Counts, proportions, and expected counts}
+Engineering data are not always measurements on a numerical scale. A software incident may be classified by cause, a building component by condition, a production fault by type, and a shipment by destination and delivery status. Such categories are often summarised by counts and proportions rather than means and standard deviations.
 
-\section{Chi-square goodness-of-fit tests}
+Categorical analysis asks whether observed counts are compatible with a proposed probability model. A goodness-of-fit analysis compares one categorical distribution with specified probabilities. A contingency-table analysis compares two classifications and asks whether their distributions are associated. In both settings, Pearson's chi-square statistic measures discrepancies between observed and expected counts.
 
-\section{Chi-square tests of independence}
+The arithmetic is compact, but a useful analysis requires more than a test statistic. The statistical question must match the sampling design, expected counts must support the chi-square approximation, and a significant result must be followed by an examination of where and how the counts differ. Effect magnitude and conditional proportions are essential because a small $p$-value does not by itself describe engineering importance.
 
-\section{Residuals and follow-up interpretation}
+This chapter develops goodness-of-fit tests with specified and estimated parameters, Monte Carlo assessment, tests of independence and homogeneity, residual interpretation, Cram\'er's $V$, sparse-table alternatives, and a practical reporting workflow. Statistical software normally performs the calculations; the objective here is to understand the quantities it reports and the conclusions they can support.
+
+\section{Categorical Counts and Statistical Questions}
+\label{sec:categorical-questions}
+
+\begin{definition}{Categorical Variable and Frequency}
+A \textbf{categorical variable} assigns each observational unit to one of a set of categories. The \textbf{frequency} of a category is the number of observed units assigned to it. Dividing a frequency by the total number of units gives a sample proportion.
+\end{definition}
+
+Categories may be nominal, such as defect mechanism or material type, or ordered, such as low, medium, and high severity. The methods in this chapter use the category counts. They do not treat category labels as numerical measurements, even when the labels happen to be coded as $0,1,2,\ldots$.
+
+A valid count table begins with clearly defined observational units. Each unit should contribute to exactly one category in a one-way table and exactly one cell in a two-way table. Categories should be mutually exclusive, collectively adequate for the stated population, and defined before discrepancies in the data are examined. Repeated observations from the same machine, person, site, or time series may be dependent and cannot automatically be treated as separate independent units.
+
+Three related questions must be distinguished.
+
+\begin{table}[htbp]
+\centering
+\caption{Three categorical questions and their data structures.}
+\label{tab:categorical-questions}
+\begin{tabularx}{\textwidth}{@{}p{0.20\textwidth}>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X@{}}
+\toprule
+Question & Data structure & Null hypothesis \\
+\midrule
+Goodness of fit & One sample classified into $k$ categories & The population category probabilities equal a specified distribution \\
+Independence & One sample; two categorical variables recorded on every unit & The two population classifications are independent \\
+Homogeneity & Independent samples from several populations or groups & The populations have the same categorical distribution \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+A test of independence and a test of homogeneity use the same Pearson calculation for a contingency table. Their interpretations differ because their data-generating designs differ. If one random sample of components is classified by both supplier and defect status, the question is independence. If separate samples are taken from several suppliers and their defect distributions are compared, the question is homogeneity.
+
+Counts and proportions play complementary roles. Counts determine the sampling variation and enter the chi-square statistic. Proportions show the size and pattern of differences. Applying a chi-square test to a table containing percentages without the corresponding sample sizes loses the information needed to assess sampling variation.
+
+\section{Chi-Square Goodness of Fit}
+\label{sec:chi-square-goodness-fit}
+
+Suppose a sample of $n$ independent units is classified into $k$ categories. Let $O_i$ be the observed count in category $i$. A fully specified null model gives category probabilities
+\[
+p_{1,0},p_{2,0},\ldots,p_{k,0},
+\qquad
+\sum_{i=1}^{k}p_{i,0}=1.
+\]
+The hypotheses are
+\[
+H_0:p_i=p_{i,0}\quad\text{for every }i
+\]
+against
+\[
+H_1:\text{at least one population category probability differs from its specified value}.
+\]
+Under $H_0$, the expected count in category $i$ is
+\[
+E_i=np_{i,0}.
+\]
+
+\begin{definition}{Pearson Chi-Square Statistic}
+The \textbf{Pearson chi-square statistic} compares observed and expected counts:
+\[
+\chi^2_{\mathrm{obs}}
+=\sum_{i=1}^{k}\frac{(O_i-E_i)^2}{E_i}.
+\]
+Every term is nonnegative. A category contributes strongly when its observed count is far from its expected count relative to the size of that expected count.
+\end{definition}
+
+Each summand is the square of a standardised count discrepancy,
+\[
+\frac{(O_i-E_i)^2}{E_i}
+=
+\left(\frac{O_i-E_i}{\sqrt{E_i}}\right)^2.
+\]
+Under $H_0$, category counts fluctuate around their expected counts. When the expected counts are sufficiently large, the vector of count discrepancies is approximately multivariate normal. The discrepancies are correlated and are constrained because
+\[
+\sum_{i=1}^{k}(O_i-E_i)=0.
+\]
+Consequently, only $k-1$ independent discrepancy directions remain. After accounting for the covariance among the counts, Pearson's quadratic form is asymptotically equivalent to a sum of squares of $k-1$ independent standard normal directions. \hyperref[sec:chi-square-sample-variance]{Section~\ref*{sec:chi-square-sample-variance}} introduced exactly such a sum of squared standard normal variables as a chi-square distribution. This explains the $k-1$ degrees of freedom in the following approximation without requiring the categorical observations themselves to be normally distributed.
+
+The category observations themselves are not chi-square distributed. It is the sampling distribution of Pearson's discrepancy statistic, calculated under $H_0$, that is approximately chi-square. The statistic equals zero only when every observed count equals its expected count. Increasing discrepancies produce larger values, so goodness-of-fit tests use the upper tail of the reference distribution.
+
+\Needspace{9\baselineskip}
+\begin{theorem}{Goodness-of-Fit Chi-Square Approximation}
+If the null probabilities are fully specified, the observations are independent, and the expected counts are sufficiently large, then under $H_0$,
+\[
+\chi^2_{\mathrm{obs}}
+\quad\text{is approximately distributed as}\quad
+\chi^2_{k-1}.
+\]
+The approximate $p$-value is
+\[
+P\!\left(\chi^2_{k-1}\geq\chi^2_{\mathrm{obs}}\mid H_0\right).
+\]
+\end{theorem}
+
+The $k-1$ degrees of freedom reflect the fixed total count: after $k-1$ category counts are known, the final count is determined by their sum. A conservative introductory guideline is to require every expected count to be at least 5. This is a practical approximation guideline, not a mathematical law. It concerns expected counts, not observed counts.
+
+\begin{example}[ Automated Inspection Profile]\par
+Historical validation of an automated inspection system gives the following probabilities for four mutually exclusive defect classifications. A new production period contains 400 independently inspected defective components.
+
+\begin{center}
+\begin{tabular}{lrrrr}
+\toprule
+Category & Alignment & Contamination & Solder & Other \\
+\midrule
+Specified probability $p_{i,0}$ & 0.45 & 0.30 & 0.15 & 0.10 \\
+Observed count $O_i$ & 212 & 96 & 58 & 34 \\
+Expected count $E_i$ & 180 & 120 & 60 & 40 \\
+$(O_i-E_i)^2/E_i$ & 5.689 & 4.800 & 0.067 & 0.900 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+All expected counts exceed 5. The test statistic is
+\[
+\chi^2_{\mathrm{obs}}
+=5.689+4.800+0.067+0.900
+=11.456.
+\]
+No parameters were estimated from the new data, so $df=4-1=3$. The upper-tail probability is
+\[
+p=P(\chi^2_3\geq11.456)\approx0.0095.
+\]
+At the 5\% level, the specified historical profile is rejected. The largest contributions come from alignment and contamination: alignment defects occur more often than expected and contamination defects less often. The test does not show why the profile changed, whether the inspection system or the production process changed, or whether every difference is operationally important.
+\end{example}
+
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}
+\begin{axis}[
+  width=0.86\textwidth,
+  height=6.4cm,
+  ybar=2pt,
+  bar width=13pt,
+  ymin=0,
+  ymax=235,
+  ylabel={Count},
+  symbolic x coords={Alignment,Contamination,Solder,Other},
+  xtick=data,
+  tick label style={font=\small},
+  label style={font=\small},
+  legend style={at={(0.5,1.02)},anchor=south,legend columns=2,draw=none,font=\small},
+  ymajorgrids=true,
+  grid style={staDarkText!10}
+]
+\addplot[fill=staViaBlue!72,draw=staViaBlue] coordinates {
+  (Alignment,212) (Contamination,96) (Solder,58) (Other,34)
+};
+\addlegendentry{Observed}
+\addplot[fill=staOrange!72,draw=staOrange] coordinates {
+  (Alignment,180) (Contamination,120) (Solder,60) (Other,40)
+};
+\addlegendentry{Expected under $H_0$}
+\end{axis}
+\end{tikzpicture}
+\caption{Observed and expected defect counts for the inspection-profile example. The chi-square statistic combines the category discrepancies after scaling them by their expected counts.}
+\label{fig:gof-observed-expected}
+\end{figure}
+
+\FloatBarrier
+
+\section{Estimated Parameters, Pooling, and Simulation}
+\label{sec:chi-square-estimated-simulation}
+
+A goodness-of-fit null hypothesis may specify a family of distributions without specifying all its parameters. For example, the claim may be that event counts follow a Poisson distribution with an unknown rate. Estimating that rate from the same sample makes the fitted expected counts closer to the observations and consumes information that would otherwise contribute to the goodness-of-fit assessment.
+
+\begin{theorem}{Degrees of Freedom with Estimated Parameters}
+Suppose a goodness-of-fit analysis uses $k$ final categories and estimates $m$ independent parameters from the same data under regular model conditions. The usual chi-square reference distribution has
+\[
+df=k-1-m.
+\]
+The parameter-estimation procedure and the expected-count calculation must correspond to the stated null model.
+\end{theorem}
+
+The subtraction of $m$ is not optional bookkeeping. Using $k-1$ after fitting parameters from the data generally gives the wrong reference distribution and therefore the wrong $p$-value.
+
+\subsection{Pooling categories}
+
+Distributional models often contain tail categories with small expected counts. Adjacent or scientifically compatible categories may be pooled so that the approximation is more credible. Observed counts and null probabilities must be pooled in exactly the same way, and the number $k$ refers to the final pooled categories.
+
+Pooling should be based on the measurement scale and the expected counts, not on which observed discrepancies are inconvenient. The final category should include the entire remaining tail probability. Omitting rare outcomes makes the expected probabilities sum to less than one and changes the null model.
+
+\begin{example}[ Poisson Model for Service Alerts]\par
+A monitoring team records the number of service alerts in each of 200 independent 15-minute intervals. The ungrouped data give sample mean $\hat\lambda=3.49$ alerts per interval. To assess a Poisson model, counts of 7 or more are pooled into one tail category.
+
+\begin{center}
+\small
+\begin{tabular}{lrrrrrrrr}
+\toprule
+Alerts & 0 & 1 & 2 & 3 & 4 & 5 & 6 & $7+$ \\
+\midrule
+Observed $O_i$ & 11 & 17 & 36 & 38 & 42 & 27 & 17 & 12 \\
+Expected $E_i$ & 6.10 & 21.29 & 37.15 & 43.22 & 37.71 & 26.32 & 15.31 & 12.90 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+For $i=0,\ldots,6$, the expected counts are
+\[
+E_i=200\,P\!\left(X=i\right),
+\qquad X\sim\operatorname{Pois}(3.49),
+\]
+and the final expected count is
+\[
+E_{7+}=200\,P(X\geq7).
+\]
+The minimum expected count is 6.10. With $k=8$ final categories and $m=1$ estimated parameter,
+\[
+df=8-1-1=6.
+\]
+The test gives
+\[
+\chi^2_{\mathrm{obs}}=6.222,
+\qquad
+p=P(\chi^2_6\geq6.222)\approx0.399.
+\]
+The data do not provide evidence against the fitted Poisson model. This conclusion does not prove that alert counts are Poisson. Dependence across adjacent intervals, changing traffic levels, or unmodelled incident periods may still make the model unsuitable for operational use.
+\end{example}
+
+\subsection{Monte Carlo assessment under the null model}
+
+When the chi-square approximation is doubtful, or when its adequacy is itself of interest, the null distribution of the statistic can be approximated by simulation. This preserves the same hypothesis-testing logic while replacing the theoretical reference curve with statistics generated under the null model.
+
+\begin{custombox}{Monte Carlo goodness-of-fit assessment}
+For an observed statistic $T_{\mathrm{obs}}$ and $B$ simulated samples:
+\begin{enumerate}
+  \item specify or fit the null distribution exactly as in the observed analysis;
+  \item simulate $B$ samples of the same size under that null model;
+  \item if parameters were estimated from the observed data, repeat the parameter estimation and expected-count construction within every simulated sample;
+  \item calculate a statistic $T_b$ for each simulated sample; and
+  \item estimate the upper-tail probability by
+  \[
+  \hat p_{\mathrm{MC}}
+  =\frac{1+\#\{b:T_b\geq T_{\mathrm{obs}}\}}{B+1}.
+  \]
+\end{enumerate}
+\end{custombox}
+
+The added 1 prevents an estimated $p$-value of exactly zero and recognises that the observed dataset is one possible outcome under the null comparison. For the fully specified inspection profile in \hyperref[fig:gof-observed-expected]{Figure~\ref*{fig:gof-observed-expected}}, 200,000 multinomial simulations give an estimated upper-tail probability of about 0.0095, close to the chi-square approximation.
+
+Simulation addresses the reference distribution, not defects in the study. It cannot repair dependent observations, categories chosen after inspecting the discrepancies, measurement errors, or a null model that fails to represent the scientific question.
+
+\section{Contingency Tables: Independence and Homogeneity}
+\label{sec:chi-square-contingency}
+
+A two-way table cross-classifies observations using a row variable and a column variable. Let $O_{ij}$ be the observed count in row $i$ and column $j$, with $r$ rows, $c$ columns, and total sample size $n$.
+
+\begin{definition}{Contingency Table and Margins}
+A \textbf{contingency table} displays counts for combinations of two categorical variables. Row totals and column totals are called the \textbf{margins}. Conditional proportions divide cell counts by the relevant row or column total and describe the categorical distribution within a group.
+\end{definition}
+
+For an independence analysis, write $p_{ij}$ for the population probability of cell $(i,j)$, $p_{i+}$ for the row probability, and $p_{+j}$ for the column probability. The hypotheses are
+\[
+H_0:p_{ij}=p_{i+}p_{+j}\quad\text{for every cell}
+\]
+against
+\[
+H_1:\text{the two population classifications are associated}.
+\]
+Under independence, the expected cell count is estimated from the margins:
+\[
+E_{ij}
+=\frac{(\text{row }i\text{ total})(\text{column }j\text{ total})}{n}.
+\]
+
+For a homogeneity analysis, the null hypothesis states that all sampled populations have the same column-category probabilities. The expected-count formula and Pearson statistic are the same; only the sampling design and contextual wording differ.
+
+\begin{theorem}{Pearson Test for a Contingency Table}
+For an $r\times c$ table with independent observational units and sufficiently large expected counts,
+\[
+\chi^2_{\mathrm{obs}}
+=\sum_{i=1}^{r}\sum_{j=1}^{c}
+\frac{(O_{ij}-E_{ij})^2}{E_{ij}}
+\]
+has, under the null hypothesis, an approximate chi-square distribution with
+\[
+df=(r-1)(c-1).
+\]
+\end{theorem}
+
+The degrees of freedom account for the estimated row and column margins. The same conservative expected-count guideline can be used: every expected cell count should preferably be at least 5 for the introductory Pearson approximation.
+
+\begin{example}[ Defect Profiles Across Production Lines]\par
+A plant independently samples 120 defect records from each of three production lines. Each defect is classified as alignment, contamination, solder, or other.
+
+\Needspace{9\baselineskip}
+\begin{center}
+\textbf{Observed defect counts}\par\medskip
+\begin{tabular}{lrrrrr}
+\toprule
+Line & Alignment & Contamination & Solder & Other & Total \\
+\midrule
+L1 & 25 & 40 & 15 & 40 & 120 \\
+L2 & 40 & 25 & 15 & 40 & 120 \\
+L3 & 55 & 10 & 10 & 45 & 120 \\
+\midrule
+Total & 120 & 75 & 40 & 125 & 360 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Because separate samples were taken from the three lines, the design asks whether the defect-type distributions are homogeneous. The null hypothesis states that all three lines have the same four category probabilities. For example,
+\[
+E_{\mathrm{L1,Alignment}}
+=\frac{120(120)}{360}
+=40.
+\]
+The expected table is
+\[
+\begin{array}{lrrrr}
+\toprule
+ & \text{Alignment} & \text{Contamination} & \text{Solder} & \text{Other}\\
+\midrule
+\text{L1} & 40.00 & 25.00 & 13.33 & 41.67\\
+\text{L2} & 40.00 & 25.00 & 13.33 & 41.67\\
+\text{L3} & 40.00 & 25.00 & 13.33 & 41.67\\
+\bottomrule
+\end{array}
+\]
+and all expected counts exceed 5. The Pearson test gives
+\[
+\chi^2_{\mathrm{obs}}=30.90,
+\qquad
+df=(3-1)(4-1)=6,
+\qquad
+p<0.001.
+\]
+The data provide strong evidence that the defect-type distributions differ among the three lines. The global test does not yet identify which cells produce the discrepancy, how large the association is, or why the lines differ.
+\end{example}
+
+If the same 360 records instead formed one random sample from the plant and both line and defect type were recorded for every defect, the numerical test would be described as a test of independence. Its conclusion would be evidence of association between line and defect type. Neither design alone establishes that changing a component's line would change its defect mechanism; causal interpretation requires control of material, product mix, inspection, shift, and other systematic differences.
+
+\section{Residuals, Conditional Proportions, and Effect Magnitude}
+\label{sec:chi-square-follow-up}
+
+A significant global test is a starting point, not a complete interpretation. Conditional proportions display the practical pattern, residuals locate important deviations from independence or homogeneity, and an effect-size measure describes the overall strength of association.
+
+For the production-line example, the row percentages are
+\[
+\begin{array}{lrrrr}
+\toprule
+ & \text{Alignment} & \text{Contamination} & \text{Solder} & \text{Other}\\
+\midrule
+\text{L1} & 20.8\% & 33.3\% & 12.5\% & 33.3\%\\
+\text{L2} & 33.3\% & 20.8\% & 12.5\% & 33.3\%\\
+\text{L3} & 45.8\% &  8.3\% &  8.3\% & 37.5\%\\
+\bottomrule
+\end{array}
+\]
+The alignment share rises from 20.8\% on L1 to 45.8\% on L3, while the contamination share falls from 33.3\% to 8.3\%. These conditional proportions are directly interpretable; the test statistic alone does not show this pattern.
+
+\subsection{Pearson and adjusted residuals}
+
+The signed Pearson residual for cell $(i,j)$ is
+\[
+r^{\mathrm{P}}_{ij}
+=\frac{O_{ij}-E_{ij}}{\sqrt{E_{ij}}}.
+\]
+Its sign gives the direction of the discrepancy, and its square is the cell's contribution to the Pearson statistic:
+\[
+\left(r^{\mathrm{P}}_{ij}\right)^2
+=\frac{(O_{ij}-E_{ij})^2}{E_{ij}}.
+\]
+Positive residuals indicate more observations than expected; negative residuals indicate fewer.
+
+For the production-line table, the Pearson residuals are
+\[
+\begin{array}{lrrrr}
+\toprule
+ & \text{Alignment} & \text{Contamination} & \text{Solder} & \text{Other}\\
+\midrule
+\text{L1} & -2.37 &  3.00 &  0.46 & -0.26\\
+\text{L2} &  0.00 &  0.00 &  0.46 & -0.26\\
+\text{L3} &  2.37 & -3.00 & -0.91 &  0.52\\
+\bottomrule
+\end{array}
+\]
+The largest absolute residuals occur for alignment and contamination on L1 and L3, agreeing with the conditional percentages.
+
+Some software reports \textbf{adjusted standardised residuals},
+\[
+r^{\mathrm{A}}_{ij}
+=\frac{O_{ij}-E_{ij}}
+{\sqrt{E_{ij}(1-\hat p_{i+})(1-\hat p_{+j})}},
+\]
+where $\hat p_{i+}$ and $\hat p_{+j}$ are the observed marginal proportions. Under adequate expected counts and the null model, these are approximately standard normal for an individual cell. Pearson residuals and adjusted residuals are therefore related but not identical. Software output and reports should name the quantity actually calculated.
+
+Residual inspection is usually exploratory. The residuals in a table are correlated, and examining many cells creates a multiple-comparison issue. A value near $2$ is not an automatic confirmatory discovery rule for every cell in a large table. The pattern, conditional proportions, design, and operational context should be considered together.
+
+\subsection{Cram\'er's $V$}
+
+The chi-square statistic generally increases with sample size, even when proportional differences remain similar. Cram\'er's $V$ scales the statistic to a unitless descriptive measure:
+\[
+V
+=\sqrt{
+\frac{\chi^2_{\mathrm{obs}}}
+{n\min(r-1,c-1)}
+}.
+\]
+It lies between 0 and 1. A value of 0 corresponds to exact agreement with independence in the observed table, while larger values indicate stronger sample association. For a $2\times2$ table, Cram\'er's $V$ equals the absolute value of the phi coefficient.
+
+For the production-line example,
+\[
+V
+=\sqrt{\frac{30.90}{360\min(2,3)}}
+\approx0.207.
+\]
+This describes an overall association that is far from perfect even though the $p$-value is very small. There are no universal boundaries for weak, moderate, or strong values of $V$. Practical importance depends on the consequences of the defect shifts, baseline rates, costs, and whether the sampled records represent future production.
+
+Cram\'er's $V$ does not identify the cells involved and does not provide a causal explanation. It should be reported with conditional proportions and residual patterns, just as $R^2$ in regression should be accompanied by coefficients, residual diagnostics, and uncertainty.
+
+\section{Conditions, Alternatives, and Reporting}
+\label{sec:chi-square-reporting}
+
+\subsection{Sparse tables and exact alternatives}
+
+When expected counts are too small, the theoretical chi-square approximation may be inaccurate. Several responses are possible:
+\begin{itemize}
+  \item combine categories only when the combined category is substantively meaningful and the rule is not chosen to hide an observed discrepancy;
+  \item use a Monte Carlo null distribution that reproduces the complete analysis;
+  \item for a sparse $2\times2$ table, use Fisher's exact test when its conditional sampling framework matches the design; or
+  \item collect more information or report the table descriptively when no defensible inferential method is supported.
+\end{itemize}
+Fisher's exact test is not a licence to ignore dependence or data-dependent categories. It addresses small cell counts under a specific table model; it does not repair a weak sampling design.
+
+For a $2\times2$ table comparing two independent proportions, the uncorrected Pearson chi-square statistic equals the square of the pooled two-proportion $z$ statistic:
+\[
+\chi^2_1=z^2.
+\]
+The corresponding two-sided tests therefore produce the same $p$-value. The two-proportion formulation emphasises a difference in proportions and its confidence interval; the contingency-table formulation emphasises association between two classifications. Running both does not create independent evidence.
+
+Chi-square goodness of fit can also be applied to binned continuous measurements, but the result depends on the chosen bin boundaries and discards within-bin information. Quantile plots and appropriate unbinned goodness-of-fit methods are generally more informative for assessing a continuous distribution. Those procedures answer a related but distinct question and are not developed here.
+
+\subsection{Analysis and reporting order}
+
+\begin{custombox}{Nine-step categorical analysis workflow}
+A defensible categorical analysis proceeds in this order:
+\begin{enumerate}
+  \item state the target population, observational unit, categorical variables, and how units were sampled or assigned;
+  \item decide whether the question is goodness of fit, independence, or homogeneity;
+  \item present observed counts together with relevant sample or conditional proportions;
+  \item state $H_0$ and $H_1$ in both probability notation and contextual language;
+  \item calculate expected counts, identify any fitted parameters, and state the correct degrees of freedom;
+  \item check independence, category definitions, expected counts, and whether chi-square, simulation, or an exact alternative is justified;
+  \item report the test statistic, degrees of freedom, and $p$-value without describing the $p$-value as the probability that $H_0$ is true;
+  \item examine conditional proportions, cell contributions or residuals, and an effect magnitude such as Cram\'er's $V$; and
+  \item conclude in the language of the categories, including practical importance, design limitations, and the distinction between association and causation.
+\end{enumerate}
+\end{custombox}
+
+For the production-line example, a compact report could read:
+
+\begin{quote}
+Defect-type distributions differed among the three sampled production lines, $\chi^2(6)=30.90$, $p<0.001$, with Cram\'er's $V=0.207$. Alignment defects accounted for 20.8\%, 33.3\%, and 45.8\% of sampled defects on L1, L2, and L3, respectively, while contamination defects accounted for 33.3\%, 20.8\%, and 8.3\%. Pearson residuals located the largest discrepancies in those line-by-defect combinations. The analysis establishes heterogeneity of the sampled defect profiles, not its production mechanism; material mix, product type, shift, and inspection procedures require separate investigation.
+\end{quote}
+
+Reporting only that ``the chi-square test was significant'' conceals the pattern and magnitude needed for a decision. Conversely, highlighting a large cell residual without the global table, conditional proportions, and design can exaggerate an isolated discrepancy. The test, follow-up summaries, and engineering context have distinct roles.
+
+Categorical analysis therefore follows the same general discipline as the preceding methods. The study design defines the question, the null model defines expected behaviour, diagnostics and effect magnitudes interpret departures, and uncertainty limits the conclusion. The next chapter integrates these principles across quantitative and categorical analyses and develops a reusable method-selection and reporting workflow.

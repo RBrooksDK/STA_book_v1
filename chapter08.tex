@@ -1,10 +1,528 @@
 \chapter{Hypothesis Testing II: Comparing Two Groups}
 \label{ch:two-group-tests}
 
-\section{Independent and paired designs}
+Many engineering questions concern a difference rather than a single population value. Does a new deployment strategy reduce response time compared with the current strategy? Do components from two suppliers have the same mean strength? Does an intervention change energy use? Is the defect proportion lower for one production process than for another? In each case, two samples provide evidence about a difference between population parameters.
 
-\section{Welch's two-sample t-test}
+The formulas are only part of the analysis. The relationship between the observations determines which comparison is valid. Measurements from distinct units form independent samples when the sampling mechanisms justify independence. Measurements taken twice on the same unit, or on deliberately matched units, are paired and must be analysed through their within-pair differences. Statistical software can evaluate either procedure, but it cannot determine which design produced the data.
 
-\section{The paired t-test}
+This chapter first develops the practical meaning of study design for two-group comparisons. It then presents Welch's procedure for two independent means, the paired $t$ procedure, and the large-sample comparison of two independent proportions. Throughout, the main object is an estimated difference with a confidence interval. A hypothesis test supplements that estimate; it does not replace the magnitude, uncertainty, or engineering interpretation of the difference.
 
-\section{Comparing two proportions}
+\section{Study Design and the Structure of a Comparison}
+\label{sec:two-group-design}
+
+The general concept of study design was introduced in \autoref{ch:sampling-distributions}. For a two-group analysis, the first practical question is how observations in one condition are related to observations in the other. This relationship is fixed by the way the data were obtained, not by the appearance of the spreadsheet or by the test that produces the smallest $p$-value.
+
+\begin{definition}{Independent Samples}
+Two samples are \textbf{independent} when information about the observations selected for one sample does not provide information about the observations selected for the other, and observations are independent within each sample under the stated model.
+\end{definition}
+
+Independent samples commonly arise when different units are observed in the two groups. For example, components from supplier A and supplier B may be selected independently, or incoming service requests may be randomly routed to two server configurations. Merely placing observations in separate columns does not establish independence. Repeated measurements from the same machine, building, person, or account can remain related even when they are recorded as different rows.
+
+\begin{definition}{Paired Observations}
+Observations are \textbf{paired} when each observation in one condition has a specific and meaningful partner in the other condition. The analysis is then based on the difference within each pair.
+\end{definition}
+
+The most common pairing measures the same unit twice, such as response time for the same request replayed before and after a software change. Pairing can also be created by matching distinct units on important characteristics, such as two buildings matched by size and construction type. The pairing must come from the design. Sorting two unrelated samples and matching observations by rank does not create valid pairs.
+
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}[
+  observation/.style={circle,draw=staViaBlue,fill=staViaBlue!8,minimum size=0.62cm,font=\small},
+  pairline/.style={staOrange,line width=1.0pt},
+  grouplabel/.style={font=\small\bfseries,text=staDarkText}
+]
+\node[grouplabel] at (-3.6,2.0) {Independent samples};
+\node[grouplabel] at (3.6,2.0) {Paired observations};
+
+\node[grouplabel] at (-5.2,1.15) {Group 1};
+\node[grouplabel] at (-2.0,1.15) {Group 2};
+\foreach \y/\lab in {0.55/1,-0.25/2,-1.05/3}{
+  \node[observation] at (-5.2,\y) {$x_{1\lab}$};
+  \node[observation] at (-2.0,\y) {$x_{2\lab}$};
+}
+
+\node[grouplabel] at (2.0,1.15) {Condition 1};
+\node[grouplabel] at (5.2,1.15) {Condition 2};
+\foreach \y/\lab in {0.55/1,-0.25/2,-1.05/3}{
+  \node[observation] (a\lab) at (2.0,\y) {$x_{\lab}$};
+  \node[observation] (b\lab) at (5.2,\y) {$y_{\lab}$};
+  \draw[pairline] (a\lab) -- node[above,font=\scriptsize,text=staOrange!80!black] {$d_{\lab}$} (b\lab);
+}
+\draw[staDarkText!25,line width=0.8pt] (0,-1.55) -- (0,1.75);
+\end{tikzpicture}
+\caption{Independent groups contain different, unrelated sampling units. A paired design preserves a meaningful connection between the two measurements in each pair.}
+\label{fig:independent-paired-designs}
+\end{figure}
+
+\FloatBarrier
+
+\subsection{Sampling, assignment, and causal claims}
+
+Two forms of randomness answer different questions. \textbf{Random sampling} from a target population supports generalisation from the sample to that population. \textbf{Random assignment} allocates observed units to conditions by chance and helps separate a treatment effect from pre-existing differences between groups. One does not imply the other.
+
+In an \textbf{observational study}, the researcher observes groups or exposures that already exist. A comparison can estimate an association, but other differences between the groups may explain part or all of it. In a \textbf{randomised experiment}, units are randomly assigned to conditions. When the protocol, measurement, and adherence are credible, random assignment provides stronger support for a causal interpretation.
+
+\begin{example}[ Identifying the Design Before Choosing a Test]\par
+An engineering team evaluates a database index in two ways.
+
+First, 40 requests are sent to the current configuration and a different set of 35 requests is sent to the indexed configuration. If the requests are sampled independently from comparable traffic, this is an independent two-sample design.
+
+Second, 30 recorded requests are replayed once on each configuration under controlled conditions. Each response time from the indexed configuration has a partner from the same request on the current configuration. This is a paired design, and the relevant observations are the 30 within-request differences.
+
+Both datasets contain two columns of response times. The method is determined by how the rows were generated, not by the number of columns.
+\end{example}
+
+\begin{table}[htbp]
+\centering
+\caption{Design questions to answer before comparing two groups.}
+\label{tab:two-group-design-questions}
+\begin{tabularx}{\textwidth}{@{}l>{\raggedright\arraybackslash}X@{}}
+\toprule
+Question & Why it matters \\
+\midrule
+What are the observational units? & Repeated rows from one unit must not automatically be treated as independent units. \\
+How were units selected? & The sampling mechanism determines the population to which results can reasonably be generalised. \\
+Were conditions assigned or merely observed? & Random assignment can support causal interpretation; observational grouping generally supports association only. \\
+Are observations independent or paired? & This determines whether variability is estimated between separate samples or within pairs. \\
+Was measurement comparable across groups? & Different instruments, timing, censoring, or missing-data mechanisms can create an artificial difference. \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\FloatBarrier
+
+\section{Comparing Two Independent Means}
+\label{sec:welch-two-means}
+
+Let population 1 have mean $\mu_1$ and variance $\sigma_1^2$, and let population 2 have mean $\mu_2$ and variance $\sigma_2^2$. The parameter of interest is the population mean difference
+\[
+\Delta=\mu_1-\mu_2.
+\]
+The order must be stated before calculation because reversing the groups changes the sign. The natural estimator is
+\[
+\widehat\Delta=\bar X_1-\bar X_2.
+\]
+
+For independent samples of sizes $n_1$ and $n_2$,
+\[
+E[\bar X_1-\bar X_2]=\mu_1-\mu_2
+\]
+and
+\[
+\operatorname{Var}(\bar X_1-\bar X_2)
+=\frac{\sigma_1^2}{n_1}+\frac{\sigma_2^2}{n_2}.
+\]
+Independence is what allows the two variance contributions to be added without a covariance term. Estimating the unknown population variances separately gives
+\[
+\operatorname{SE}(\bar X_1-\bar X_2)
+=
+\sqrt{\frac{s_1^2}{n_1}+\frac{s_2^2}{n_2}}.
+\]
+
+\subsection{Welch's procedure}
+
+Welch's procedure allows the two populations to have different variances. It is therefore the default independent-means procedure in this book. The method uses an approximate Student $t$ distribution with Welch--Satterthwaite degrees of freedom
+\[
+\nu
+=
+\frac{\left(s_1^2/n_1+s_2^2/n_2\right)^2}
+{\dfrac{(s_1^2/n_1)^2}{n_1-1}
+ +\dfrac{(s_2^2/n_2)^2}{n_2-1}}.
+\]
+The value of $\nu$ need not be an integer. Statistical software evaluates its $t$ probabilities and critical values directly.
+
+\newpage
+
+\begin{theorem}{Welch Confidence Interval and Test}
+Let the two samples be independent random samples from populations for which the Welch approximation is adequate. An approximate $100(1-\alpha)\%$ confidence interval for $\Delta=\mu_1-\mu_2$ is
+\[
+(\bar x_1-\bar x_2)
+\pm
+t_{\nu,\,1-\alpha/2}
+\sqrt{\frac{s_1^2}{n_1}+\frac{s_2^2}{n_2}}.
+\]
+To test
+\[
+H_0:\mu_1-\mu_2=\Delta_0,
+\]
+use
+\[
+t_{
+\mathrm{obs}}
+=
+\frac{(\bar x_1-\bar x_2)-\Delta_0}
+{\sqrt{s_1^2/n_1+s_2^2/n_2}},
+\]
+with the approximate $t_\nu$ null distribution. The common no-difference claim has $\Delta_0=0$.
+\end{theorem}
+
+The alternative hypothesis determines whether one or both tails are used, exactly as in the one-sample setting. For the common two-sided comparison,
+\[
+H_0:\mu_1-\mu_2=0
+\qquad\text{against}\qquad
+H_1:\mu_1-\mu_2\neq0.
+\]
+A matching confidence interval that excludes zero yields rejection at the corresponding significance level.
+
+\begin{example}[ Mean Strength from Two Material Suppliers]\par
+A civil engineering laboratory compares compressive strength from two suppliers. Independent specimens give
+\[
+\begin{array}{c|ccc}
+& n & \bar x\ (\text{MPa}) & s\ (\text{MPa})\\
+\hline
+\text{Supplier 1} & 18 & 52.4 & 4.8\\
+\text{Supplier 2} & 14 & 48.9 & 6.1
+\end{array}
+\]
+Define $\Delta=\mu_1-\mu_2$. The estimated difference is
+\[
+\widehat\Delta=52.4-48.9=3.5\text{ MPa},
+\]
+and its estimated standard error is
+\[
+\operatorname{SE}(\widehat\Delta)
+=\sqrt{\frac{4.8^2}{18}+\frac{6.1^2}{14}}
+\approx1.984\text{ MPa}.
+\]
+The Welch--Satterthwaite calculation gives $\nu\approx24.24$. For
+\[
+H_0:\Delta=0
+\qquad\text{against}\qquad
+H_1:\Delta\neq0,
+\]
+the observed statistic is
+\[
+t_{\mathrm{obs}}=\frac{3.5}{1.984}\approx1.764,
+\]
+giving a two-sided $p$-value of approximately $0.090$. With $t_{24.24,0.975}\approx2.063$, the 95\% confidence interval is
+\[
+3.5\pm2.063(1.984)
+=[-0.59,7.59]\text{ MPa}.
+\]
+Supplier 1 has the larger observed mean, but the data remain compatible with population differences ranging from a small advantage for supplier 2 to a substantial advantage for supplier 1. At the 5\% level, the study does not establish a difference. This is not evidence that the suppliers are equivalent; the interval is too wide to support that stronger conclusion.
+\end{example}
+
+\subsection{Why Welch is preferred to automatic pooling}
+
+The classical pooled two-sample procedure assumes a common population variance,
+\[
+\sigma_1^2=\sigma_2^2=\sigma^2.
+\]
+It estimates that variance by
+\[
+s_p^2
+=
+\frac{(n_1-1)s_1^2+(n_2-1)s_2^2}
+{n_1+n_2-2}
+\]
+and uses
+\[
+\operatorname{SE}_{\mathrm{pooled}}(\bar X_1-\bar X_2)
+=s_p\sqrt{\frac{1}{n_1}+\frac{1}{n_2}}
+\]
+with $n_1+n_2-2$ degrees of freedom. This model is valid when a common variance is substantively justified. Similar sample standard deviations alone do not establish equal population variances, and a preliminary variance test followed by a choice of mean test adds an unnecessary data-dependent decision. Welch's procedure performs well when variances are equal and remains appropriate when they are not.
+
+\subsection{Conditions and robustness}
+
+\begin{table}[htbp]
+\centering
+\caption{Conditions to examine for a comparison of independent means.}
+\label{tab:welch-conditions}
+\begin{tabularx}{\textwidth}{@{}l>{\raggedright\arraybackslash}X@{}}
+\toprule
+Condition & Practical question \\
+\midrule
+Quantitative response & Is a difference in population means meaningful for the measured outcome? \\
+Independent groups & Are the units in one group unrelated to those in the other, and are observations independent within each group? \\
+Representative or randomised design & Do the samples address the intended populations, or were units assigned so that a causal comparison is credible? \\
+Distributional adequacy & For small samples, are the population distributions reasonably normal? For larger samples, are skewness and influential outliers limited enough for mean-based inference? \\
+Comparable measurement & Were outcome definitions, instruments, timing, and missing-data handling comparable in both groups? \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+Welch's method does not require equal variances, but it still requires a credible independent-samples design. Large samples improve the normal approximation for the sample means; they do not repair dependence, selection bias, confounding, or incompatible measurements.
+
+\section{Paired Comparisons}
+\label{sec:paired-comparisons}
+
+Suppose pair $i$ provides measurements $X_i$ and $Y_i$. Choose an order with a clear interpretation and define
+\[
+D_i=X_i-Y_i,
+\qquad i=1,\ldots,n.
+\]
+The paired problem is then a one-sample problem for the differences $D_1,\ldots,D_n$. Its population parameter is
+\[
+\mu_D=E[D],
+\]
+the mean within-pair difference. Under the no-change claim, $\mu_D=0$.
+
+\newpage
+
+\begin{theorem}{Paired $t$ Confidence Interval and Test}
+Let $D_1,\ldots,D_n$ be independent pair differences from an approximately normal population of differences. A $100(1-\alpha)\%$ confidence interval for $\mu_D$ is
+\[
+\bar d
+\pm
+t_{n-1,\,1-\alpha/2}\frac{s_D}{\sqrt n}.
+\]
+To test
+\[
+H_0:\mu_D=\Delta_0,
+\]
+use
+\[
+t_{\mathrm{obs}}
+=
+\frac{\bar d-\Delta_0}{s_D/\sqrt n},
+\]
+with $n-1$ degrees of freedom. The common no-change claim has $\Delta_0=0$.
+\end{theorem}
+
+The number of observations for the analysis is the number of complete pairs, not twice the number of pairs. Normality concerns the differences, not the two marginal distributions separately. A large unit-to-unit baseline variation can be removed by pairing because each unit acts as its own comparison.
+
+For paired variables with standard deviations $\sigma_X$ and $\sigma_Y$ and correlation $\rho$, the variance of a difference is
+\[
+\operatorname{Var}(D)
+=\sigma_X^2+\sigma_Y^2-2\rho\sigma_X\sigma_Y.
+\]
+When the paired measurements are positively correlated, the final term reduces the variability of the differences. This can make a paired design substantially more precise than a comparison of unrelated units. Pairing is helpful only when the connection is real and preserved in the data.
+
+\begin{example}[ Response Time Before and After an Update]\par
+Twenty representative requests are replayed on the same server before and after an update. For each request define
+\[
+D_i=(\text{response time before})-(\text{response time after}),
+\]
+so a positive difference represents an improvement. The 20 differences have
+\[
+\bar d=9.0\text{ ms},
+\qquad
+s_D=12.0\text{ ms}.
+\]
+The estimated standard error is
+\[
+\frac{s_D}{\sqrt n}
+=\frac{12.0}{\sqrt{20}}
+\approx2.683\text{ ms}.
+\]
+Testing
+\[
+H_0:\mu_D=0
+\qquad\text{against}\qquad
+H_1:\mu_D\neq0
+\]
+gives
+\[
+t_{\mathrm{obs}}
+=\frac{9.0}{2.683}
+\approx3.354
+\]
+with 19 degrees of freedom, and a two-sided $p$-value of approximately $0.0033$. Since $t_{19,0.975}\approx2.093$, the 95\% confidence interval is
+\[
+9.0\pm2.093(2.683)
+=[3.38,14.62]\text{ ms}.
+\]
+The data provide evidence that the update reduces mean response time for requests represented by this replay design. The estimated reduction is 9 ms, with plausible values from about 3.4 to 14.6 ms. Whether this improvement matters operationally depends on service requirements and on whether replay conditions represent production traffic.
+\end{example}
+
+\subsection{Why the independent analysis is different}
+
+An independent two-sample analysis estimates variability from separate groups and ignores within-pair association. Applied to genuinely paired data, it can discard the precision gained through pairing. Conversely, applying a paired procedure to unrelated observations invents a dependence that the design does not contain. The correct choice cannot be recovered from the numerical values alone.
+
+Incomplete pairs also require attention. Removing every pair with one missing value changes the analysed population if missingness is related to the outcome. Statistical software can omit incomplete rows automatically, but the resulting target population and possible bias still require explanation.
+
+\section{Comparing Two Independent Proportions}
+\label{sec:two-proportions}
+
+For binary outcomes, let $p_1$ and $p_2$ denote the population probabilities of the event in two independent groups. Examples include defect or no defect, compromised or secure, late or on time, and failure or success. The primary parameter is often the difference
+\[
+\Delta_p=p_1-p_2.
+\]
+If group $j$ contains $x_j$ events among $n_j$ independent observations, then
+\[
+\widehat p_j=\frac{x_j}{n_j},
+\qquad j=1,2,
+\]
+and
+\[
+\widehat\Delta_p=\widehat p_1-\widehat p_2.
+\]
+
+\subsection{Confidence interval for a difference in proportions}
+
+The estimated standard error used for a large-sample confidence interval is
+\[
+\operatorname{SE}(\widehat p_1-\widehat p_2)
+=
+\sqrt{
+\frac{\widehat p_1(1-\widehat p_1)}{n_1}
++
+\frac{\widehat p_2(1-\widehat p_2)}{n_2}
+}.
+\]
+An approximate $100(1-\alpha)\%$ interval for $p_1-p_2$ is therefore
+\[
+(\widehat p_1-\widehat p_2)
+\pm
+z_{1-\alpha/2}
+\operatorname{SE}(\widehat p_1-\widehat p_2).
+\]
+This interval estimates each group's variance separately because the two proportions are not assumed equal.
+
+\subsection{Testing equality of two proportions}
+
+For
+\[
+H_0:p_1=p_2
+\qquad\text{against}\qquad
+H_1:p_1\neq p_2,
+\]
+the null hypothesis states that both groups share one event probability $p$. The pooled estimator under that assumption is
+\[
+\widehat p
+=
+\frac{x_1+x_2}{n_1+n_2}.
+\]
+The null standard error and observed statistic are
+\[
+\operatorname{SE}_0
+=
+\sqrt{
+\widehat p(1-\widehat p)
+\left(\frac{1}{n_1}+\frac{1}{n_2}\right)
+}
+\]
+and
+\[
+z_{\mathrm{obs}}
+=
+\frac{\widehat p_1-\widehat p_2}
+{\operatorname{SE}_0}.
+\]
+Under $H_0$ and adequate large-sample conditions, this statistic is approximately standard normal. The pooled estimate belongs to the test because equality is assumed while constructing the null distribution. It should not replace the separate estimates in the confidence interval.
+
+\begin{example}[ Defect Proportions from Two Production Processes]\par
+Independent component samples from two production processes give
+\[
+\begin{array}{c|cc}
+& \text{defects }x & \text{inspected }n\\
+\hline
+\text{Process 1} & 18 & 800\\
+\text{Process 2} & 36 & 750
+\end{array}
+\]
+The observed defect proportions are
+\[
+\widehat p_1=\frac{18}{800}=0.0225,
+\qquad
+\widehat p_2=\frac{36}{750}=0.0480.
+\]
+Thus
+\[
+\widehat p_1-\widehat p_2=-0.0255,
+\]
+meaning 2.55 fewer observed defects per 100 inspected components for Process 1. The unpooled standard error is
+\[
+\sqrt{
+\frac{0.0225(0.9775)}{800}
++
+\frac{0.0480(0.9520)}{750}
+}
+\approx0.00940.
+\]
+The 95\% confidence interval is
+\[
+-0.0255\pm1.960(0.00940)
+=[-0.0439,-0.0071].
+\]
+
+For the test of equal defect probabilities, the pooled estimate is
+\[
+\widehat p
+=\frac{18+36}{800+750}
+\approx0.03484,
+\]
+giving
+\[
+\operatorname{SE}_0
+=\sqrt{0.03484(1-0.03484)
+\left(\frac{1}{800}+\frac{1}{750}\right)}
+\approx0.00932
+\]
+and
+\[
+z_{\mathrm{obs}}
+=\frac{-0.0255}{0.00932}
+\approx-2.736.
+\]
+The two-sided $p$-value is approximately $0.0062$. The data provide evidence of different defect probabilities, with Process 1 estimated to have between 0.71 and 4.39 percentage points fewer defects. A process decision should also consider inspection validity, production conditions, cost, and whether the samples represent future production.
+\end{example}
+
+\subsection{Risk difference, relative risk, and odds ratio}
+
+The difference $p_1-p_2$, also called a \textbf{risk difference} for adverse events, gives an absolute effect in proportions or percentage points. Two additional measures describe relative effects:
+\[
+\text{relative risk}
+=\frac{p_1}{p_2},
+\qquad
+\text{odds ratio}
+=
+\frac{p_1/(1-p_1)}{p_2/(1-p_2)}.
+\]
+For the production example, the estimated relative risk is
+\[
+\frac{0.0225}{0.0480}\approx0.469,
+\]
+so the observed defect probability for Process 1 is about 47\% of that for Process 2. The estimated odds ratio is approximately $0.457$. These relative measures can be useful, but the absolute reduction of 2.55 percentage points is often easier to connect to avoided defects, cost, and production capacity. An odds ratio must not be interpreted as a relative risk, especially when the event is common.
+
+\subsection{Conditions and the boundary of the method}
+
+The normal approximation requires enough expected events and non-events in each group. Sparse data can make the approximation inaccurate; exact or specially adjusted procedures may then be more appropriate and are evaluated using statistical software. More importantly, the observations must be independent within and between groups, and each group must represent its intended population or assigned condition.
+
+This section concerns \emph{independent} binary samples. If the same units are classified before and after an intervention, the binary outcomes are paired. The independent two-proportion procedure is then incorrect; a paired binary method is required and lies outside the scope of this chapter.
+
+\section{Choosing and Reporting a Two-Group Analysis}
+\label{sec:choosing-two-group-method}
+
+The correct method follows from the outcome type and the study design. \autoref{tab:two-group-method-selection} summarises the three core cases.
+
+\begin{table}[htbp]
+\centering
+\caption{Core methods for comparing two groups in this chapter.}
+\label{tab:two-group-method-selection}
+\begin{tabularx}{\textwidth}{@{}l>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X@{}}
+\toprule
+Outcome & Design & Parameter & Primary method \\
+\midrule
+Quantitative & Independent groups & $\mu_1-\mu_2$ & Welch two-sample $t$ procedure \\
+Quantitative & Paired or matched observations & $\mu_D$ & One-sample $t$ procedure on pair differences \\
+Binary & Independent groups & $p_1-p_2$ & Large-sample two-proportion procedure \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\FloatBarrier
+
+\begin{custombox}{Six-step analysis order}
+A defensible two-group analysis proceeds in this order:
+\begin{enumerate}
+  \item state the target populations, observational units, outcome, and order of the difference;
+  \item describe how units were sampled or assigned and determine whether observations are independent or paired;
+  \item inspect the group distributions or pair differences and examine missingness, outliers, and measurement comparability;
+  \item estimate the population difference and report an appropriate confidence interval;
+  \item if a hypothesis test addresses a relevant claim, state $H_0$ and $H_1$, report the test statistic and $p$-value, and use the direction selected before seeing the result; and
+  \item interpret the magnitude and uncertainty in engineering units, together with design limitations and the distinction between association and causation.
+\end{enumerate}
+\end{custombox}
+
+\subsection{A difference must be tested directly}
+
+A recurring mistake is to test each group separately and then compare the two decisions. Suppose an effect is statistically significant in group 1 but not in group 2. This does not imply that the groups differ significantly. The two $p$-values depend on both observed effects and standard errors, and one can fall just below a threshold while the other falls just above it even when the estimates are similar. A group difference must be assessed with a confidence interval or test constructed directly for that difference.
+
+\subsection{Reporting effect and uncertainty}
+
+For quantitative outcomes, the unstandardised mean difference is usually the most useful effect measure because it retains milliseconds, megapascals, kilowatt-hours, or other engineering units. A standardised mean difference can help compare effects across incompatible scales, but it does not replace a domain threshold or tolerance. For binary outcomes, report the absolute difference in proportions and, when useful, a relative risk or odds ratio with clear labels.
+
+Statistical software is normally used to evaluate degrees of freedom, tail probabilities, critical values, and intervals. It should reproduce the method justified by the design. It cannot decide whether requests are genuinely paired, whether production samples are representative, whether random assignment was followed, or whether a 9 ms improvement is operationally valuable.
+
+The three procedures in this chapter share one principle: estimate the difference that answers the engineering question, quantify its sampling uncertainty, and interpret it in light of how the observations were obtained. The next chapter extends the comparison from two means to several means using analysis of variance.

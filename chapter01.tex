@@ -7,6 +7,8 @@ Consider a software development team analyzing the performance of their web appl
 
 This chapter introduces the fundamental concepts of descriptive statistics, focusing on measures that help us understand the central tendencies, variability, and distribution patterns in our data. We will explore how these techniques apply specifically to software engineering contexts, from analyzing algorithm performance to understanding user behavior patterns.
 
+In practical data analysis, statistical software such as Python is normally used to construct frequency tables and graphs and to evaluate numerical summaries for realistic datasets. The definitions and formulas in this chapter remain essential because they specify what is being calculated and determine how the result should be interpreted. Software performs the arithmetic and drawing; it does not decide which summary or graph is appropriate for the data and the engineering question.
+
 \section{Introduction to Descriptive Statistics} \label{sec:ch1-introduction}
 
 Sometimes statistical work begins with existing data, such as precipitation records, unemployment rates, or GDP figures, which we then summarize and analyze. In other situations, data must be generated through an experiment or study. For example, to compare two teaching methods in an introductory programming course, an instructor might randomly divide students into two groups, apply a different method to each, and then compare test scores. Random assignment is essential: it ensures that differences between groups are not due to preexisting factors such as aptitude, but rather to the teaching method itself.
@@ -166,8 +168,6 @@ vertical lines. A line graph of the data presented in \autoref{tab:salary_freq} 
 \end{figure}
 
 When the lines in a line graph are given added thickness, the graph is called a bar graph. \autoref{fig:salary_bar_graph} shows a bar graph for the same salary data.
-
-\newpage
 
 \begin{figure}[htbp]
 \centering
@@ -789,6 +789,7 @@ Percentiles divide data into 100 equal parts, while quartiles divide data into f
 
 The \textbf{interquartile range} is a robust measure of dispersion that is generally much less sensitive to extreme observations than the full range or the standard deviation.
 
+\newpage
 \begin{definition}[Interquartile Range]
     The \textbf{interquartile range (IQR)} measures the spread of the middle 50\% of the data and is defined as
     $$
@@ -812,7 +813,7 @@ For the response time data: $\{120, 150, 180, 200, 220, 250, 280, 300, 350, 400\
 
 \subsection*{Summary Statistics}
 
-Before we conclude this chapter, we will review the summary statistics covered in this section. \autoref{tab:summary_stats} is a hypothetical example for a separate dataset of 1000 web response times. The underlying observations are not listed, so the values are included to illustrate the structure of a summary table rather than as a reproducible calculation from the preceding ten observations.
+Before we move on to the next section, we will review the summary statistics covered in this section. \autoref{tab:summary_stats} is a hypothetical example for a separate dataset of 1000 web response times. The underlying observations are not listed, so the values are included to illustrate the structure of a summary table rather than as a reproducible calculation from the preceding ten observations.
 
 \begin{example}
 

@@ -58,7 +58,7 @@ textbook chapter and session contract, not constrain them.
 - **Ross check:** 1.2–1.4 and 2.1–2.3
 - **Core:** populations and samples; data types; summaries; sample versus population variance; histograms, boxplots, scatterplots, shape and outliers
 - **Reuse decision:** the textbook chapter is a direct reuse of `MSE_book_v2/chapter06.tex`, including its tables, graphs, grouped-data treatment, ogives, computational variance formula, coefficient of variation, normal and skewed data, outlier detection, and boxplots
-- **Draft status:** complete theory-first textbook chapter; Python remains tutorial-only
+- **Draft status:** complete theory-first textbook chapter; statistical software is mentioned only as the normal practical tool for producing summaries and plots, while all code remains tutorial-only
 - **Editorial departures from MSE Chapter 6:** removes the Law of Large Numbers and empirical-rule material; retains a descriptive introduction to normal data and the normal curve, with the mathematical model deferred by cross-reference to Chapter 4; adapts only chapter labels, STA colour names, transitions to later chapters, and minor wording needed for this standalone book
 - **Reference convention:** all internal references use `\autoref` so the complete phrase, such as `Figure 1.5`, is clickable
 
@@ -80,9 +80,9 @@ textbook chapter and session contract, not constrain them.
 - **Old STA:** sessions 02–03 and their tutorials
 - **Session notes:** [STA 02](https://drive.google.com/file/d/1azFhbhkKSIiLboKuxTlyhh-41jYMtbRm/view?usp=sharing), [STA 03](https://drive.google.com/file/d/1laRKIxHLa2DBjmzVMQuKyc6vilaPrFNx/view?usp=sharing), [SMP 02](https://drive.google.com/file/d/1LJ8Nu0D1PLLB1FF1jTsLK50HGLhl1EtG/view?usp=sharing)
 - **Ross check:** 4.1–4.2, 4.4, 4.6, 5.1–5.2; optional parts of 5.3
-- **Core:** random variables, PMF, CDF, expectation, variance, Bernoulli, binomial and Poisson; SciPy and simulation remain tutorial-only on the course website
+- **Core:** random variables, PMF, CDF, expectation, variance, Bernoulli, binomial and Poisson; statistical software is mentioned generically for numerical evaluation, while SciPy and simulation remain tutorial-only on the course website
 - **Boundary:** geometric, negative binomial and hypergeometric are enrichment; no MGFs or multivariate theory
-- **Draft status:** Sections 3.1–3.4 are complete as theory-first textbook material; the chapter close remains to be written
+- **Draft status:** complete theory-first textbook chapter, including its concluding synthesis and transition to continuous models
 - **Example coverage so far:** components and inspection cost, cybersecurity alerts and rare incidents, production defects and panel flaws, software packet loss and service failures, supply-chain delays and urgent orders, structural fastener tests, climate exceedances and flood warnings, and mechanical sampling without replacement
 
 ### Chapter 4 — Continuous Distributions in Practice
@@ -90,9 +90,11 @@ textbook chapter and session contract, not constrain them.
 - **STA1:** `04_Continuous_Distributions_in_Practice/README.md`, `Tutorial_04.md`, datasets `response_times.csv` and `component_lifetimes.csv`
 - **Old STA:** sessions 04–05 and their tutorials
 - **Session notes:** [STA 04](https://drive.google.com/file/d/1hfivT-AFbsnR9CxJeff-K2dTC7MC-HPZ/view?usp=sharing), [STA 05](https://drive.google.com/file/d/1qTGWWIihQLTLNe0e-0nUwGIbpkH7XWkS/view?usp=sharing), [SMP 03](https://drive.google.com/file/d/1-MKzwovM7uHrSUQ_XBe1NczVT2ssdbKd/view?usp=sharing)
-- **Ross check:** 5.4–5.6
-- **Core:** PDF, CDF, survival function, quantiles, uniform, normal and exponential models, standardisation and QQ-plots
-- **Boundary:** probability is explained as area, but students do not integrate densities by hand; no calculus-based moment derivations
+- **Ross check:** 4.2, selected results from 4.4 and 4.6, and 5.4–5.6
+- **Core:** continuous support, PDF, CDF, survival function, quantiles, uniform, normal and exponential models, standardisation, cumulative standard normal tables, the empirical rule, memorylessness, the practical Poisson-count/exponential-waiting-time connection, model choice and QQ-plots
+- **Boundary:** calculus is limited to the three conceptual integral forms needed to interpret a density: total area, interval probability, and accumulated CDF area; students do not integrate densities by hand, and continuous-moment integrals and their derivations are omitted
+- **Draft status:** complete theory-first textbook chapter in five sections; Python remains tutorial-only
+- **Example coverage:** measurement resolution, maintenance time, supply-chain delivery windows, calibration error, machined shaft diameters, voltage thresholds, standard normal table lookups, server-request waiting times, electronic-component lifetimes, network traffic and response-time QQ diagnostics
 
 ### Chapter 5 — Sampling Distributions and the Central Limit Theorem
 
@@ -100,8 +102,11 @@ textbook chapter and session contract, not constrain them.
 - **Old STA:** session 06 and its tutorial
 - **Session notes:** [STA 06](https://drive.google.com/file/d/1YQHZe0Ukj0Jkhn3vTrjLkFKJfVwcWUOg/view?usp=sharing)
 - **Ross check:** 6.1–6.3 and selected parts of 6.4–6.5
-- **Core:** statistics as random variables, sampling distribution of the mean, standard error and simulation-based CLT
-- **Critical check:** distinguish `N(mu, sigma^2/n)` in the book from SciPy's `scale=sigma/sqrt(n)`
+- **Core:** i.i.d. random samples; statistics as random variables; population, observed-sample and sampling distributions; exact and approximate sampling distributions of the mean; standard error; sums and sample proportions; the law of large numbers; the central limit theorem; the sample variance; and the normal-population results leading through chi-square to Student's (t)
+- **Boundary:** no proofs, moment-generating functions, finite-population correction, technical convergence theory, bootstrap methods, or software code; simulation belongs in the tutorial and is used to illustrate rather than justify assumptions
+- **Critical checks:** write the sample-mean distribution as `N(mu, sigma^2/n)`, distinguish exact normal sampling from a CLT approximation, never claim that the CLT makes raw data normal, and do not use a universal `n >= 30` rule
+- **Draft status:** complete theory-first chapter in four sections; Chapter 5 is the active isolated PDF build
+- **Example coverage:** production sampling, exact discrete repeated sampling, plate thickness, vibration precision, cyber-alert proportions, skewed server response times, road-salt capacity, process variance, and battery capacity
 
 ### Chapter 6 — Estimation and Confidence Intervals
 
@@ -109,8 +114,12 @@ textbook chapter and session contract, not constrain them.
 - **Old STA:** session 07 and its tutorial
 - **Session notes:** [STA 07](https://drive.google.com/file/d/1HV1sbPdtBIYqaGUiHVdnnVXospCYBhAK/view?usp=sharing), [SMP 06](https://drive.google.com/file/d/1EFr1Pz5E2lyVtgxd2Lwj9O4SdvcyXw_x/view?usp=sharing)
 - **Ross check:** 7.1, 7.3 and 7.5; defer 7.4 to Chapter 8
-- **Core:** estimator versus estimate, bias and precision, standard error, z- and t-intervals for a mean, interval for a proportion and correct coverage interpretation
-- **Enrichment:** one small bootstrap interval as a computational check
+- **Core:** estimator versus estimate; bias and precision; confidence level, margin of error, and repeated-sampling coverage; z- and t-intervals for one population mean; sample-size planning; Wald and Wilson intervals for one population proportion; and responsible interpretation
+- **Boundary:** no proofs, maximum likelihood, Bayesian intervals, intervals for a variance, prediction intervals, or two-sample intervals; no software code in the textbook
+- **Enrichment:** bootstrap resampling is introduced conceptually at the end of the chapter and implemented only in the practical tutorial
+- **Critical checks:** the parameter is fixed while the interval procedure is random; a realised 95% interval is not assigned probability 0.95; Wilson is the practical default for proportions while Wald is retained to explain the normal approximation
+- **Draft status:** complete theory-first chapter in five sections; Chapter 6 is the active isolated PDF build
+- **Example coverage:** service monitoring, sensor calibration, combined sensor readings, laboratory coverage, concrete strength, parallel-computing speedup, vibration-study planning, authentication alerts, rare manufacturing defects, and energy reduction
 
 ### Chapter 7 — Hypothesis Testing I
 
@@ -118,17 +127,26 @@ textbook chapter and session contract, not constrain them.
 - **Old STA:** one-sample portions of session 08 and `Tutorial_8.md`
 - **Session notes:** [STA 08](https://drive.google.com/file/d/1Ji4laf6gU06-unx-QhclQupT4u9OePUA/view?usp=sharing), [SMP 07](https://drive.google.com/file/d/1sIXa8DCVkjguV8dHwXPTtPZiQKLZsc-o/view?usp=sharing)
 - **Ross check:** 8.1–8.3 and the one-sample part of 8.6
-- **Core:** hypotheses, one- and two-sided alternatives, alpha, p-values, errors, intuitive power, one-sample t-test and proportion test
-- **Critical language:** never define a p-value as `P(H0 | data)`; use “fail to reject,” not “accept”
+- **Core:** hypotheses, one- and two-sided alternatives, alpha, test statistics, p-values, type I/II errors, intuitive power, one-sample z/t tests, formal normality assessment using Shapiro--Wilk together with Q--Q plots and Anderson--Darling as an alternative, score and exact binomial tests for one proportion, confidence-interval/test duality, and practical versus statistical significance
+- **Boundary:** no proofs, software code, formal power-curve calculations, equivalence testing, Bayesian hypothesis probabilities, two-sample methods, or multiple-testing procedures; those topics are either outside scope or developed later
+- **Critical language:** never define a p-value as `P(H0 | data)`; use “fail to reject,” not “accept”; report effect magnitude and a matching confidence interval where useful; and distinguish the nominal alpha level from the possibly smaller realised size of a discrete exact test
+- **Draft status:** complete theory-first chapter in five sections; Chapter 7 is the active isolated PDF build
+- **Example coverage:** structural fasteners, process design and sampling validity, sensor calibration, cybersecurity incident response, laboratory concentration, machining tolerances, server response time, automated production inspection, safety-interlock failures, and climate-sensor calibration
 
 ### Chapter 8 — Hypothesis Testing II
 
+- **Draft status:** complete theory-first chapter in five sections; Chapters 5
+  and 8 are the active review build
 - **STA1:** `08_Hypothesis_Testing_II_Comparing_Two_Groups/README.md`, `Tutorial_08.md`, dataset `response_times.csv`
 - **Old STA:** two-sample and paired portions of session 08 and `Tutorial_8.md`
 - **Session notes:** [STA 08](https://drive.google.com/file/d/1Ji4laf6gU06-unx-QhclQupT4u9OePUA/view?usp=sharing), [SMP 07](https://drive.google.com/file/d/1sIXa8DCVkjguV8dHwXPTtPZiQKLZsc-o/view?usp=sharing)
 - **Ross check:** 7.4, 8.4 and the two-sample part of 8.6
-- **Core:** independent versus paired designs, Welch t-test, paired t-test, two proportions, confidence intervals and effect sizes
+- **Core:** study-design expansion, observational versus randomised comparisons,
+  independent versus paired designs, Welch t-test, paired t-test, independent
+  two-proportion inference, confidence intervals and effect measures
 - **Design rule:** determine the sampling design before selecting a Python function
+- **Boundary:** no proofs, software code, standalone variance tests, paired
+  binary procedures, equivalence testing, or multiple-group comparisons
 
 ### Chapter 9 — Analysis of Variance
 
@@ -146,15 +164,20 @@ textbook chapter and session contract, not constrain them.
 - **Old SMP:** session 08 and `Calculating_metrics.md`
 - **Session notes:** [STA 09](https://drive.google.com/file/d/155VOAnrutze7091LObcAhAcnau__uBl1/view?usp=sharing), [SMP 08](https://drive.google.com/file/d/1N_hUEd6Hwn93dVtaSWHsFqe9N47E2WRg/view?usp=sharing)
 - **Ross check:** 9.1–9.2 and 9.4–9.6
-- **Core:** least squares, coefficient interpretation, correlation, R-squared, slope inference, residual diagnostics, confidence and prediction intervals
-- **Python:** Statsmodels for inference; scikit-learn only to connect to predictive workflows
+- **Core:** study design and scatterplots, least squares, coefficient interpretation, residual standard deviation, correlation, R-squared, slope inference, residual diagnostics, conceptual leverage and influence, and confidence versus prediction intervals
+- **Python:** Statsmodels for estimation, inference and diagnostics; machine-learning workflows and scikit-learn are outside the core chapter and session
 
 ### Chapter 11 — Categorical Data and Chi-Square Tests
 
 - **STA1:** `11_Categorical_Data_and_Chi_Square_Tests/README.md`, `Tutorial_11.md`, dataset `defect_types.csv`
 - **Old STA:** `10_Goodness_of_fit_og_analyse_af_kategoriske_data/README.md` and tutorial/site exercises
 - **Ross check:** 11.1–11.4
-- **Core:** counts and proportions, expected counts, goodness-of-fit, independence, assumptions and standardised residuals
+- **Core:** counts and conditional proportions; fully specified and
+  estimated-parameter goodness of fit; pooling and Monte Carlo assessment;
+  independence versus homogeneity; expected counts and degrees of freedom;
+  Pearson and adjusted standardised residuals; Cramer's V; and sparse-table
+  alternatives; explicitly connect squared standardised count discrepancies
+  with the chi-square distribution introduced for sample variance
 - **New work:** there is no separate old session-notes PDF; create a coherent textbook narrative and original engineering examples
 
 ### Chapter 12 — Integrated Statistical Analysis and Exam Preparation

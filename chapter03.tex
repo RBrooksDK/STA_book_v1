@@ -707,6 +707,8 @@ P(a\leq X\leq b)=F_X(b)-F_X(a-1).
 \]
 Careful attention to the endpoints prevents the off-by-one errors discussed for general CDFs in \autoref{sec:random-variables-pmf-cdf}.
 
+For realistic values of $n$, $p$, and $\lambda$, exact, cumulative, and tail probabilities are normally evaluated with statistical software such as Python. The formulas remain the foundation of the calculation: they identify the model, translate the engineering event into probability notation, and determine which tail or interval is required. Software evaluates the resulting sums accurately, but it does not select the model or correct an event that has been formulated incorrectly.
+
 \begin{example}[ Packet Loss in a Software System]\par
 Suppose a message contains $100$ packets. Under a simplified model, each packet is lost independently with probability $0.01$, and $X$ is the number of packets that must be retransmitted. Then
 \[

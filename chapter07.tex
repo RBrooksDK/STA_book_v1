@@ -1,10 +1,732 @@
 \chapter{Hypothesis Testing I: Principles and One-Sample Tests}
-\label{ch:one-sample-tests}
 
-\section{Hypotheses, significance levels, and p-values}
+Estimation and hypothesis testing answer related but different questions. A point estimate describes the value suggested by a sample, and a confidence interval describes the precision of that estimate. A hypothesis test begins with a specified value or claim and asks whether the observed data are reasonably compatible with it.
 
-\section{Type I and type II errors}
+Engineering decisions often have this form. Is the mean thickness of a manufactured plate still equal to its target? Has average server response time exceeded a service threshold? Is the proportion of defective components greater than the stated limit? The sample rarely agrees exactly with the claimed value, even when the claim is correct, because statistics vary from sample to sample. A test therefore measures the observed discrepancy relative to the sampling variation expected under the claim.
 
-\section{One-sample tests for a mean and proportion}
+The result is not a proof that a hypothesis is true or false. It is a quantified assessment of evidence under a probability model. The reasoning depends on the sampling distribution developed in Chapter 5 and the standard errors and confidence intervals developed in Chapter 6. This chapter develops the general logic of testing, explains $p$-values and decision errors, and then applies the framework to one population mean and one population proportion.
 
-\section{Effect size and practical importance}
+\section{Claims, Hypotheses, and Statistical Evidence}
+\label{sec:hypotheses-evidence}
+
+A statistical analysis should begin with the population quantity of interest. Without a clearly stated parameter, the hypotheses and the conclusion can easily refer to different questions.
+
+\begin{definition}{Statistical Hypothesis}
+A \textbf{statistical hypothesis} is a statement about a population parameter or probability model. A \textbf{hypothesis test} is a procedure that uses sample data to assess the compatibility of that statement with the observations.
+\end{definition}
+
+Typical one-sample parameters include a population mean $\mu$ and a population proportion $p$. The parameter is fixed, although unknown. The sample statistic is random before the data are collected and provides the evidence used by the test.
+
+\begin{table}[htbp]
+\centering
+\caption{Examples of one-sample engineering questions and their parameters.}
+\label{tab:one-sample-questions}
+\begin{tabularx}{\textwidth}{@{}>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}Xl@{}}
+\toprule
+Engineering question & Population quantity & Parameter \\
+\midrule
+Is mean API response time equal to its service target? & Mean response time for requests under the stated operating conditions & $\mu$ \\
+Does mean concrete strength exceed the minimum design requirement? & Mean strength for material produced by the process & $\mu$ \\
+Is the fraction of compromised login attempts above the alert threshold? & Probability that a login attempt is compromised & $p$ \\
+Is the proportion of late deliveries greater than the contractual limit? & Probability that a delivery from the process is late & $p$ \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection{The null and alternative hypotheses}
+
+Two competing statements are used to organise the test.
+
+\begin{definition}{Null and Alternative Hypotheses}
+The \textbf{null hypothesis}, denoted $H_0$, is the claim used to construct the reference distribution of the test statistic. The \textbf{alternative hypothesis}, denoted $H_1$ or $H_A$, describes the departures from $H_0$ that the study is designed to detect.
+\end{definition}
+
+For a population mean, the most common null hypothesis is
+\[
+H_0:\mu=\mu_0,
+\]
+where $\mu_0$ is a specified target, standard, or historical value. Three common alternatives are shown in \autoref{tab:alternative-directions}.
+
+\begin{table}[htbp]
+\centering
+\caption{The alternative determines which discrepancies count as evidence against the null hypothesis.}
+\label{tab:alternative-directions}
+\begin{tabularx}{\textwidth}{@{}lll>{\raggedright\arraybackslash}X@{}}
+\toprule
+Test & Null hypothesis & Alternative hypothesis & Question \\
+\midrule
+Two-sided & $H_0:\mu=\mu_0$ & $H_1:\mu\neq\mu_0$ & Is the mean different in either direction? \\
+Upper-tailed & $H_0:\mu=\mu_0$ & $H_1:\mu>\mu_0$ & Is the mean greater than the specified value? \\
+Lower-tailed & $H_0:\mu=\mu_0$ & $H_1:\mu<\mu_0$ & Is the mean less than the specified value? \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+The equality is conventionally placed in $H_0$ because the null value supplies the sampling distribution used in the calculation. For a one-sided test, the broader null may be written $\mu\leq\mu_0$ or $\mu\geq\mu_0$. The test is calculated at the boundary $\mu=\mu_0$, which is the null value most favourable to the alternative.
+
+\begin{example}[ Choosing the Direction for a Structural Test]\par
+The specified mean breaking load of a fastener is $42$ kN. If departures in either direction indicate that the manufacturing process has changed, the appropriate hypotheses are
+\[
+H_0:\mu=42
+\qquad\text{and}\qquad
+H_1:\mu\neq42.
+\]
+
+If the engineering concern is specifically inadequate strength, the question is instead whether the mean has fallen below the requirement:
+\[
+H_0:\mu=42
+\qquad\text{and}\qquad
+H_1:\mu<42.
+\]
+An observed sample mean above $42$ kN is not evidence for this lower-tailed alternative, however far above the target it lies.
+\end{example}
+
+\subsection{Direction must follow the question}
+
+A one-sided test concentrates all of the stated type I error probability in one tail and can therefore detect a change in that direction more readily. It is justified only when a discrepancy in the opposite direction would not lead to the same scientific claim. The direction must be chosen from the engineering question before inspecting the data. Selecting the favourable tail after observing the sample invalidates the stated significance level.
+
+For example, a production manager should not choose $H_1:\mu>\mu_0$ merely because the observed mean happens to exceed $\mu_0$. If both increases and decreases would matter, the test must be two-sided even when the realised discrepancy points in only one direction.
+
+\subsection{The claim is only as credible as the design}
+
+A test describes sampling variation under its statistical model. It does not establish that observations are representative, independent, correctly measured, or generated under stable conditions. A very small $p$-value from a biased sensor or a convenience sample may precisely quantify the wrong comparison. The population, sampling unit, measurement procedure, and operating conditions must therefore be specified before the hypotheses are interpreted.
+
+\section{Test Statistics, \texorpdfstring{$p$}{p}-Values, and Decision Errors}
+\label{sec:test-statistics-pvalues-errors}
+
+The raw difference between an estimate and a null value is not enough to assess evidence. A deviation of $0.5$ units may be remarkable in a highly stable process and ordinary in a variable one. A test statistic compares the discrepancy with its standard error under $H_0$.
+
+\begin{definition}{Test Statistic and Null Distribution}
+A \textbf{test statistic} is a statistic used to measure disagreement between the sample and $H_0$. Its \textbf{null distribution} is its sampling distribution calculated under the assumption that $H_0$ is true.
+\end{definition}
+
+Many one-sample test statistics have the standardised form
+\[
+\text{test statistic}
+=
+\frac{\text{estimate}-\text{null value}}
+     {\text{standard error under }H_0}.
+\]
+A value near zero means that the estimate is close to the null value relative to expected sampling variation. A value far into a tail of the null distribution indicates greater disagreement.
+
+\subsection{The $p$-value}
+
+\begin{definition}{$p$-Value}
+Assume that the null hypothesis $H_0$ is true and that the statistical model assumptions hold. The \textbf{$p$-value} is the probability, over hypothetical repetitions of the sampling process, of obtaining a test statistic at least as incompatible with $H_0$ as the statistic observed.
+\end{definition}
+
+For a symmetric standardised statistic $T$ with observed value $t_{\mathrm{obs}}$, the relevant tail probability depends on $H_1$:
+\[
+\begin{array}{lll}
+H_1:\theta>\theta_0
+&\Longrightarrow&
+p=P_{H_0}(T\geq t_{\mathrm{obs}}),\\[0.3em]
+H_1:\theta<\theta_0
+&\Longrightarrow&
+p=P_{H_0}(T\leq t_{\mathrm{obs}}),\\[0.3em]
+H_1:\theta\neq\theta_0
+&\Longrightarrow&
+p=P_{H_0}(|T|\geq |t_{\mathrm{obs}}|).
+\end{array}
+\]
+The last expression counts discrepancies at least as far from zero in either direction. \autoref{fig:two-sided-pvalue} shows the two tail areas for an observed standardised statistic of magnitude $2.1$.
+
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}
+\begin{axis}[
+  width=0.82\textwidth,
+  height=5.4cm,
+  domain=-4:4,
+  samples=180,
+  axis lines=left,
+  axis line style={staDarkText!70},
+  xlabel={value of the standardised test statistic},
+  ylabel={},
+  ymin=0,
+  ymax=0.44,
+  ytick=\empty,
+  xtick={-2.1,0,2.1},
+  xticklabels={$-|t_{\mathrm{obs}}|$,$0$,$|t_{\mathrm{obs}}|$},
+  tick label style={font=\small},
+  label style={font=\small},
+  clip=false
+]
+\addplot[draw=none,fill=staOrange!35,domain=-4:-2.1]
+  {exp(-x^2/2)/sqrt(2*pi)} \closedcycle;
+\addplot[draw=none,fill=staOrange!35,domain=2.1:4]
+  {exp(-x^2/2)/sqrt(2*pi)} \closedcycle;
+\addplot[staViaBlue,line width=1.2pt]
+  {exp(-x^2/2)/sqrt(2*pi)};
+\draw[staOrange,dashed,line width=0.9pt]
+  (axis cs:-2.1,0) -- (axis cs:-2.1,{exp(-2.1^2/2)/sqrt(2*pi)});
+\draw[staOrange,dashed,line width=0.9pt]
+  (axis cs:2.1,0) -- (axis cs:2.1,{exp(-2.1^2/2)/sqrt(2*pi)});
+\node[staOrange!80!black,font=\small] at (axis cs:-2.75,0.075) {tail};
+\node[staOrange!80!black,font=\small] at (axis cs:2.75,0.075) {tail};
+\end{axis}
+\end{tikzpicture}
+\caption{For a two-sided test, the $p$-value is the combined null probability in both tails beyond the observed magnitude.}
+\label{fig:two-sided-pvalue}
+\end{figure}
+
+\FloatBarrier
+
+The direction of the conditioning is essential. A $p$-value is calculated \emph{given that the null hypothesis is true}:
+\[
+p\text{-value}
+=
+P\!\left(
+\substack{\text{test statistic at least as extreme}\\
+          \text{as the observed statistic}}
+\,\middle|\,
+H_0\text{ is true}
+\right).
+\]
+In words, we assume $H_0$ and its model assumptions, and then ask how unusual the observed test statistic would be under that assumption. This is not the reversed conditional probability
+\[
+p\text{-value}
+\neq
+P\!\left(H_0\text{ is true}\mid\text{observed data}\right).
+\]
+The expression on the right is a posterior probability for $H_0$. It requires a Bayesian model, including prior probabilities, and is not supplied by a frequentist hypothesis test. Nor is the $p$-value the probability that the result occurred ``by chance.'' Random variation is already part of the null model; the $p$-value measures how extreme the observation is within that model.
+
+\begin{example}[ Interpreting a Small $p$-Value]\par
+Suppose a test of a sensor's mean calibration error produces $p=0.018$. If the null value and model assumptions are correct, results at least as incompatible with the null hypothesis as the observed result would occur with probability $0.018$ under repeated sampling.
+
+The result does not mean that $H_0$ has probability $0.018$, that there is a $98.2\%$ probability of a calibration shift, or that the shift is large enough to matter operationally.
+\end{example}
+
+\subsection{Significance level and decision language}
+
+\begin{definition}{Significance Level}
+The \textbf{significance level}, denoted $\alpha$, is the chosen upper bound on the probability of rejecting $H_0$ when the null hypothesis is true, for a test procedure whose assumptions hold. For many continuous test statistics the type I error probability equals $\alpha$; for a discrete exact test it may be smaller.
+\end{definition}
+
+The significance level is chosen before the data are examined. Common choices such as $0.05$ and $0.01$ are conventions rather than universal laws. Safety-critical decisions may justify a smaller type I error probability, while screening procedures may use a different balance between false alarms and missed changes.
+
+The standard decision rule is
+\[
+\begin{aligned}
+p\leq\alpha
+&\quad\Longrightarrow\quad \text{reject }H_0,\\
+p>\alpha
+&\quad\Longrightarrow\quad \text{fail to reject }H_0.
+\end{aligned}
+\]
+Failing to reject $H_0$ does not establish that $H_0$ is true. The data may be compatible with the null value, or the study may simply have insufficient information to detect the departure that is present.
+
+\subsection{Type I error, type II error, and power}
+
+Every decision rule can make errors because samples vary.
+
+\begin{definition}{Type I and Type II Errors}
+A \textbf{type I error} occurs when a test rejects $H_0$ although $H_0$ is true. A \textbf{type II error} occurs when a test fails to reject $H_0$ although a specific alternative is true.
+\end{definition}
+
+\begin{definition}{Power}
+The \textbf{power} of a test at a particular alternative parameter value is the probability of rejecting $H_0$ when that alternative is true. If the type II error probability at that value is $\beta$, then
+\[
+\text{power}=1-\beta.
+\]
+\end{definition}
+
+\begin{table}[htbp]
+\centering
+\caption{Possible outcomes of a hypothesis-testing procedure.}
+\label{tab:test-decision-errors}
+\begin{tabularx}{\textwidth}{@{}l>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X@{}}
+\toprule
+Decision & $H_0$ is true & A specified alternative is true \\
+\midrule
+Reject $H_0$ & Type I error, with probability at most $\alpha$ & Correct detection, with probability equal to the power \\
+Fail to reject $H_0$ & Correct non-rejection & Type II error, with probability $\beta$ \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\begin{example}[ False Alarms and Missed Intrusions]\par
+A cybersecurity team tests whether the proportion of malicious requests has risen above a baseline value. Rejecting $H_0$ triggers an expensive incident response.
+
+A type I error is a false alarm: the baseline rate has not increased, but the test triggers the response. A type II error is a missed increase: the malicious-request rate has risen, but the test does not detect it. The relative consequences of these errors should influence the design, sample size, and choice of $\alpha$ before monitoring begins.
+\end{example}
+
+Power is not a single fixed property of a test. A large departure from $H_0$ is easier to detect than a small departure. Power generally increases with a larger sample size, a larger true effect, and lower observation variability. Reducing $\alpha$ makes false rejection less likely but, with all else fixed, also makes rejection harder and reduces power. These competing consequences are part of study design rather than something a $p$-value can resolve after the data have been collected.
+
+\section{One-Sample Tests for a Population Mean}
+\label{sec:one-sample-mean-tests}
+
+Suppose $X_1,\ldots,X_n$ are independent observations from a population with mean $\mu$. We wish to test a specified mean $\mu_0$. The sample mean $\bar X$ estimates $\mu$, and its standard error determines how large a discrepancy $\bar X-\mu_0$ must be to count as unusual.
+
+\subsection{Known population standard deviation}
+
+When the population standard deviation $\sigma$ is genuinely known, the standardised statistic is
+\[
+Z=\frac{\bar X-\mu_0}{\sigma/\sqrt n}.
+\]
+
+\begin{theorem}{One-Sample $z$ Statistic under the Null Hypothesis}
+Let $X_1,\ldots,X_n$ be an i.i.d. sample with mean $\mu$ and known standard deviation $\sigma$. Under
+\[
+H_0:\mu=\mu_0,
+\]
+the statistic
+\[
+Z=\frac{\bar X-\mu_0}{\sigma/\sqrt n}
+\]
+has a standard normal distribution when the population is normal. It is approximately standard normal when the sampling distribution of $\bar X$ is adequately approximated by the central limit theorem.
+\end{theorem}
+
+Known $\sigma$ is uncommon outside a well-characterised and stable process. A historical standard deviation should not automatically be treated as known when operating conditions, equipment, or suppliers may have changed.
+
+\begin{example}[ Mean Concentration with Known Process Variability]\par
+A laboratory process has a long-established standard deviation of $0.9$ mg/L. For $n=36$ independent specimens, the observed mean concentration is $14.7$ mg/L. Test
+\[
+H_0:\mu=15
+\qquad\text{against}\qquad
+H_1:\mu\neq15.
+\]
+The standard error and observed statistic are
+\[
+\frac{\sigma}{\sqrt n}
+=\frac{0.9}{\sqrt{36}}
+=0.15,
+\]
+and
+\[
+z_{\mathrm{obs}}
+=\frac{14.7-15}{0.15}
+=-2.00.
+\]
+The two-sided $p$-value is
+\[
+p=2P(Z\geq2.00)\approx0.0455.
+\]
+At $\alpha=0.05$, the null hypothesis is rejected. The data provide evidence that the mean differs from $15$ mg/L under the stated process model. The estimated difference is $-0.3$ mg/L; whether that difference matters must be judged in concentration units, not from the $p$-value alone.
+\end{example}
+
+\subsection{Unknown population standard deviation}
+
+In most applications, $\sigma$ is unknown and is estimated by the sample standard deviation $S$. This additional uncertainty changes the reference distribution from standard normal to Student's $t$ distribution.
+
+\newpage
+\begin{theorem}{One-Sample $t$ Statistic under the Null Hypothesis}
+Let $X_1,\ldots,X_n$ be an i.i.d. sample from a normal population with mean $\mu$ and unknown variance. Under
+\[
+H_0:\mu=\mu_0,
+\]
+the statistic
+\[
+T=\frac{\bar X-\mu_0}{S/\sqrt n}
+\]
+has a Student $t$ distribution with $n-1$ degrees of freedom.
+\end{theorem}
+
+The observed statistic is therefore
+\[
+t_{\mathrm{obs}}
+=\frac{\bar x-\mu_0}{s/\sqrt n}.
+\]
+The same value is used for all three alternatives; only the tail area changes. For $\nu=n-1$ degrees of freedom,
+\[
+\begin{array}{lll}
+H_1:\mu>\mu_0
+&\Longrightarrow& p=P(T_\nu\geq t_{\mathrm{obs}}),\\[0.3em]
+H_1:\mu<\mu_0
+&\Longrightarrow& p=P(T_\nu\leq t_{\mathrm{obs}}),\\[0.3em]
+H_1:\mu\neq\mu_0
+&\Longrightarrow& p=P(|T_\nu|\geq|t_{\mathrm{obs}}|).
+\end{array}
+\]
+
+\subsection{Conditions for the one-sample $t$ procedure}
+
+The exact $t$ result assumes independent sampling from a normal population. In practice, the procedure is often reasonably robust to moderate non-normality, especially for larger samples, because the sample mean becomes more nearly normal. Robustness is not a licence to ignore the data-generating process.
+
+\begin{table}[htbp]
+\centering
+\caption{Conditions to examine before interpreting a one-sample $t$ test.}
+\label{tab:one-sample-t-conditions}
+\begin{tabularx}{\textwidth}{@{}l>{\raggedright\arraybackslash}X@{}}
+\toprule
+Condition & Practical question \\
+\midrule
+Quantitative response & Is a population mean a meaningful summary of the measured quantity? \\
+Representative observations & Does the sample address the stated target population and operating conditions? \\
+Independence & Are repeated measurements, clusters, time dependence, or duplicated units being treated as independent? \\
+Distributional adequacy & For a small sample, is a normal population model credible? For a larger sample, are extreme skewness and influential outliers limited enough for the mean and its standard error to be useful? \\
+Measurement validity & Are calibration, resolution, censoring, and missingness capable of producing systematic error? \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+No universal sample-size threshold guarantees validity. A sample of 30 highly dependent observations is not repaired by its size, while a smaller sample from a well-controlled normal process may support exact $t$ inference.
+
+\subsection{Assessing a normality assumption}
+\label{sec:formal-normality-assessment}
+
+A normal quantile plot, also called a Q--Q plot or normal probability plot, compares the ordered observations with the quantiles expected from a normal distribution. A nearly straight pattern supports the shape of a normal model, while systematic curvature, asymmetric tails, or isolated points reveal how the data depart from that model. The plot is valuable because it displays the form and practical size of a discrepancy rather than reducing the assessment to one number.
+
+A formal normality test answers a related but narrower question. For independent observations $X_1,\ldots,X_n$, the hypotheses may be written
+\[
+H_0:X_1,\ldots,X_n\text{ are sampled from }N(\mu,\sigma^2)
+\text{ for some }\mu\text{ and }\sigma>0
+\]
+against
+\[
+H_1:\text{the population distribution is not normal}.
+\]
+The null hypothesis specifies the normal family rather than fixed numerical values of $\mu$ and $\sigma$. Any calibration of the test must therefore account for estimating these parameters from the data.
+
+\begin{definition}{Shapiro--Wilk Normality Statistic}
+Let $X_{(1)}\leq\cdots\leq X_{(n)}$ denote the ordered observations. The \textbf{Shapiro--Wilk statistic} has the form
+\[
+W
+=
+\frac{\left(\sum_{i=1}^{n}a_iX_{(i)}\right)^2}
+     {\sum_{i=1}^{n}(X_i-\bar X)^2},
+\]
+where the constants $a_i$ are determined from the expected order statistics and covariance structure of a standard normal sample of size $n$. Values of $W$ close to 1 indicate that the ordered observations align closely with a normal pattern; unusually small values indicate departure from normality.
+\end{definition}
+
+The Shapiro--Wilk $p$-value is a lower-tail probability,
+\[
+p=P(W\leq W_{\mathrm{obs}}\mid H_0\text{ and independent sampling}).
+\]
+The null distribution of $W$ is not a chi-square distribution. Statistical software uses a specialised approximation to its null distribution; the reference distribution can also be approximated by repeatedly simulating normal samples of the same size and recalculating $W$.
+
+The Anderson--Darling statistic is another formal goodness-of-fit measure. It compares the empirical distribution with a fitted normal cumulative distribution and gives relatively strong weight to tail discrepancies. When $\mu$ and $\sigma$ are estimated, a Monte Carlo implementation should refit them within each simulated sample before comparing the simulated statistic with the observed statistic. Shapiro--Wilk is a convenient primary normality test, while Anderson--Darling is a useful alternative when tail behaviour is especially important.
+
+\begin{example}[ Formal Assessment of Recovery Times]\par
+Eleven independently selected recovery operations have durations, in seconds,
+\[
+48,\ 54,\ 58,\ 60,\ 61,\ 62,\ 66,\ 70,\ 82,\ 95,\ 136.
+\]
+The upper observations bend away from the line in a normal probability plot. A Shapiro--Wilk analysis reports
+\[
+W=0.789,
+\qquad
+p=0.0067.
+\]
+If recovery times were sampled independently from a normal population, a Shapiro--Wilk statistic no greater than $0.789$ would occur with probability about $0.0067$. The data therefore provide evidence against a normal population model. The test does not identify the engineering cause: the long recovery may represent a valid heavy tail, a separate failure mode, a recording error, or changing operating conditions. Those possibilities require examination before selecting a replacement model or procedure.
+\end{example}
+
+The quantity assessed must match the statistical model. A one-sample $t$ procedure concerns the distribution of the observations around one population mean. A paired $t$ procedure concerns the paired differences, not the two measurements separately. One-way ANOVA concerns within-group errors, and regression concerns residuals around the fitted line; pooling distinct groups or testing the marginal response can create apparent non-normality that is irrelevant to the assumed model.
+
+Formal tests should not be used as automatic gatekeepers. In a small sample, a large $p$-value may reflect low power rather than convincing normality. In a large sample, a small $p$-value may detect a mild departure that has little effect on a robust mean comparison. A defensible assessment combines the Q--Q plot, the formal test, sample size, outliers, study design, and the sensitivity of the intended inference. Independence and representative sampling remain more fundamental and cannot be established by a normality test.
+
+\begin{example}[ Two-Sided Test of Mean Shaft Diameter]\par
+A machining process targets a mean shaft diameter of $40.00$ mm. A random sample of $n=16$ shafts gives
+\[
+\bar x=40.18\text{ mm},
+\qquad
+s=0.24\text{ mm}.
+\]
+To detect a shift in either direction, test
+\[
+H_0:\mu=40.00
+\qquad\text{against}\qquad
+H_1:\mu\neq40.00.
+\]
+The standard error is
+\[
+\operatorname{SE}(\bar X)
+=\frac{0.24}{\sqrt{16}}
+=0.06\text{ mm},
+\]
+so
+\[
+t_{\mathrm{obs}}
+=\frac{40.18-40.00}{0.06}
+=3.00.
+\]
+With $15$ degrees of freedom, the two-sided $p$-value is approximately
+\[
+p=0.0090.
+\]
+At $\alpha=0.05$, reject $H_0$. The sample provides evidence that the process mean differs from the target.
+
+Using $t_{15,0.975}=2.131$, the corresponding 95\% confidence interval is
+\[
+40.18\pm2.131(0.06)
+=[40.052,40.308]\text{ mm}.
+\]
+The null value $40.00$ mm lies outside the interval, giving the same decision as the two-sided test. The estimated shift is $0.18$ mm, which must also be compared with engineering tolerances.
+\end{example}
+
+\begin{example}[ One-Sided Test of Mean Server Response Time]\par
+A service-level investigation asks whether mean response time has exceeded $200$ ms. A representative sample of $n=25$ requests gives $\bar x=205.4$ ms and $s=12.0$ ms. The hypotheses are
+\[
+H_0:\mu=200
+\qquad\text{and}\qquad
+H_1:\mu>200.
+\]
+The observed statistic is
+\[
+t_{\mathrm{obs}}
+=\frac{205.4-200}{12/\sqrt{25}}
+=\frac{5.4}{2.4}
+=2.25.
+\]
+With $24$ degrees of freedom, the upper-tail probability is
+\[
+p=P(T_{24}\geq2.25)\approx0.0169.
+\]
+At the 5\% level, reject $H_0$. The data support the conclusion that mean response time exceeds $200$ ms under the sampled operating conditions. The relevant estimated exceedance is $5.4$ ms; the test alone does not decide whether that increase has operational importance.
+\end{example}
+
+The one-sided alternative in this example was determined by the service question. A two-sided analysis of the same data would have a $p$-value approximately twice as large because it would count extreme discrepancies in both directions.
+
+\section{One-Sample Tests for a Population Proportion}
+\label{sec:one-sample-proportion-tests}
+
+Binary outcomes arise when a unit passes or fails, an order is late or on time, an alarm is true or false, or a component survives or fails. Let $X$ be the number of observations with the specified outcome among $n$ independent Bernoulli trials. Under a stable success probability $p$,
+\[
+X\sim\operatorname{Binomial}(n,p),
+\qquad
+\hat p=\frac{X}{n}.
+\]
+The test compares $\hat p$ with a null value $p_0$.
+
+\subsection{The large-sample score test}
+
+Under $H_0:p=p_0$, the null standard error of the sample proportion is
+\[
+\operatorname{SE}_0(\hat p)
+=\sqrt{\frac{p_0(1-p_0)}{n}}.
+\]
+This gives the score statistic
+\[
+Z
+=\frac{\hat p-p_0}
+       {\sqrt{p_0(1-p_0)/n}}.
+\]
+When the binomial distribution is adequately approximated by a normal distribution under $H_0$, this statistic is approximately standard normal.
+
+Notice that the denominator uses $p_0$, not $\hat p$. The test asks how variable $\hat p$ would be if the null hypothesis were true. This differs from the Wald standard error used in the simplest confidence interval.
+
+A common diagnostic is to check whether both expected null counts
+\[
+np_0
+\qquad\text{and}\qquad
+n(1-p_0)
+\]
+are reasonably large. Values near a boundary or small expected counts make the discrete binomial distribution poorly represented by a continuous normal curve. The check is a guideline for approximation quality, not a substitute for examining independence and a stable success probability.
+
+\begin{example}[ Has an Automated Inspection Flag Rate Increased?]\par
+An automated inspection system is expected to flag $5\%$ of units for manual review. During a stable production period, it flags $74$ of $1{,}000$ independently sampled units. Test
+\[
+H_0:p=0.05
+\qquad\text{against}\qquad
+H_1:p>0.05.
+\]
+The observed proportion is $\hat p=0.074$. Under $H_0$,
+\[
+\operatorname{SE}_0(\hat p)
+=\sqrt{\frac{0.05(0.95)}{1000}}
+\approx0.006892.
+\]
+Therefore,
+\[
+z_{\mathrm{obs}}
+=\frac{0.074-0.05}{0.006892}
+\approx3.482.
+\]
+The upper-tail $p$-value is
+\[
+p=P(Z\geq3.482)\approx0.00025.
+\]
+Reject $H_0$ at the 5\% level. The data provide strong evidence that the flag rate exceeds $5\%$. The estimated increase is
+\[
+0.074-0.050=0.024,
+\]
+or $2.4$ percentage points. Whether that increase justifies recalibration depends on review capacity, costs, and the consequences of missed defects.
+\end{example}
+
+\subsection{The exact binomial test}
+
+When the expected counts are small, the binomial distribution can be used directly instead of relying on a normal approximation.
+
+\begin{definition}{Exact One-Sample Binomial Test}
+Under $H_0:p=p_0$, the count $X$ has the exact distribution
+\[
+X\sim\operatorname{Binomial}(n,p_0).
+\]
+For an observed count $x$, the upper- and lower-tailed exact $p$-values are
+\[
+P_{p_0}(X\geq x)
+\qquad\text{and}\qquad
+P_{p_0}(X\leq x),
+\]
+respectively.
+\end{definition}
+
+Because a binomial distribution is discrete, there is more than one convention for constructing a two-sided exact $p$-value. A common probability-based definition sums the null probabilities of outcomes no more likely than the observed outcome. Statistical reports should identify the method used when the distinction can affect the conclusion.
+
+\begin{example}[ Rare Failures in a Small Safety Test]\par
+A safety interlock has a claimed failure probability of $0.05$. In $n=20$ independent trials, the interlock fails $x=3$ times. To investigate an increased failure probability, test
+\[
+H_0:p=0.05
+\qquad\text{against}\qquad
+H_1:p>0.05.
+\]
+The exact upper-tail $p$-value is
+\[
+\begin{aligned}
+p
+&=P(X\geq3\mid X\sim\operatorname{Binomial}(20,0.05))\\
+&=1-P(X\leq2)\\
+&\approx0.0755.
+\end{aligned}
+\]
+At $\alpha=0.05$, fail to reject $H_0$. The data are concerning enough to motivate further investigation, but they do not meet the specified rejection rule.
+
+The normal score statistic would be
+\[
+z_{\mathrm{obs}}
+=\frac{0.15-0.05}{\sqrt{0.05(0.95)/20}}
+\approx2.052,
+\]
+giving an upper-tail normal approximation near $0.020$. The disagreement is substantial because the expected null count of failures is only $np_0=1$. The exact binomial calculation is the more credible analysis here.
+\end{example}
+
+\begin{table}[htbp]
+\centering
+\caption{Choosing a method for one population proportion.}
+\label{tab:one-proportion-methods}
+\begin{tabularx}{\textwidth}{@{}l>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X@{}}
+\toprule
+Method & Main use & Important limitation \\
+\midrule
+Exact binomial test & Small samples, rare outcomes, or inadequate normal approximation & Discreteness makes attainable $p$-values and coverage conservative or uneven; two-sided conventions can differ \\
+Score $z$ test & Large-sample test of a specified proportion $p_0$ & Requires an adequate normal approximation under $H_0$ \\
+Wilson interval & Practical interval estimate for $p$ & It is an interval, not a replacement for stating the test question and alternative \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection{Connection with the Wilson interval}
+
+The score test and Wilson confidence interval use the same null-based standardisation. A two-sided score test of $H_0:p=p_0$ at significance level $\alpha$ rejects exactly when $p_0$ lies outside the corresponding $100(1-\alpha)\%$ Wilson score interval. This is one reason the Wilson interval developed in Chapter 6 is preferable to the Wald interval.
+
+The method must match when applying this duality. An exact binomial test has a corresponding family of exact intervals; its decision need not agree perfectly with a Wilson interval because discrete exact methods and score methods use different constructions.
+
+The binomial assumptions remain essential for both procedures. Dependence between repeated observations, changing risk across time, or a sample that overrepresents high-risk units can invalidate the model even when the numerical calculation is exact.
+
+\section{Confidence Intervals, Practical Significance, and Responsible Conclusions}
+\label{sec:testing-responsible-conclusions}
+
+A hypothesis test compresses evidence into a comparison with a specified claim. A confidence interval provides additional information by displaying the parameter values compatible with the data at the corresponding confidence level. Whenever practical, the estimate, interval, and test should be reported together.
+
+\subsection{Duality between two-sided tests and intervals}
+
+\begin{theorem}{Confidence-Interval and Test Duality}
+For a two-sided hypothesis test of
+\[
+H_0:\theta=\theta_0
+\]
+at significance level $\alpha$, using a test and confidence interval constructed from the same statistical method,
+\[
+\text{reject }H_0
+\quad\Longleftrightarrow\quad
+\theta_0\text{ lies outside the }100(1-\alpha)\%\text{ confidence interval}.
+\]
+\end{theorem}
+
+For a one-sample mean with unknown variance, the matching pair is the two-sided $t$ test and the $t$ confidence interval. For a population proportion, the matching pair is the score test and Wilson score interval. The phrase ``same method'' matters: combining a Wald interval with an exact test need not produce identical decisions.
+
+An interval communicates more than a reject-or-fail-to-reject decision. It shows the direction of the estimated departure, its magnitude, and the range of parameter values that remain compatible with the data under the model.
+
+\subsection{Statistical significance is not practical importance}
+
+Statistical significance concerns the strength of evidence against a specified null value. Practical significance concerns whether the size of the estimated departure matters in the application. With a sufficiently large sample, a very small and operationally irrelevant difference can produce a small $p$-value. With a small or noisy sample, an important difference can remain statistically inconclusive.
+
+Useful effect descriptions depend on the parameter and context.
+
+\begin{table}[htbp]
+\centering
+\caption{Effect measures that should accompany one-sample tests.}
+\label{tab:one-sample-effect-measures}
+\begin{tabularx}{\textwidth}{@{}l>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X@{}}
+\toprule
+Parameter & Natural effect measure & Contextual comparison \\
+\midrule
+Mean $\mu$ & $\bar x-\mu_0$ in the original measurement unit & Tolerance, minimum useful change, safety margin, cost, or service threshold \\
+Proportion $p$ & $\hat p-p_0$ in proportions or percentage points & Allowed defect rate, risk threshold, operational capacity, or contractual limit \\
+Mean across incompatible scales & Standardised difference $(\bar x-\mu_0)/s$ when genuinely useful & Domain-specific interpretation is still required \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+Raw engineering units are usually easier to act upon than a standardised effect. A standardised difference can help compare effects measured on different scales, but it does not replace tolerances, costs, safety requirements, or domain knowledge.
+
+\begin{example}[ A Statistically Detectable but Small Climate-Sensor Bias]\par
+A large calibration study of $n=400$ readings gives a mean sensor error of $\bar x=0.12^\circ$C and a sample standard deviation of $s=0.80^\circ$C. Test
+\[
+H_0:\mu=0
+\qquad\text{against}\qquad
+H_1:\mu\neq0.
+\]
+The test statistic is
+\[
+t_{\mathrm{obs}}
+=\frac{0.12-0}{0.80/\sqrt{400}}
+=3.00,
+\]
+with $399$ degrees of freedom, giving
+\[
+p\approx0.0029.
+\]
+The corresponding 95\% confidence interval is approximately
+\[
+[0.041,0.199]^\circ\text{C}.
+\]
+The data provide strong evidence of a positive mean calibration error. However, suppose the engineering tolerance is $\pm0.5^\circ$C. The estimated bias and the entire interval are well within that tolerance. The shift is statistically detectable, but the operational response should be based on the size of the error and its consequences rather than on the $p$-value alone.
+\end{example}
+
+\subsection{A complete statistical conclusion}
+
+\begin{custombox}{Reporting checklist}
+A responsible report should enable a reader to reconstruct both the statistical result and its engineering meaning. At minimum, it should state:
+
+\begin{enumerate}
+  \item the target population and parameter;
+  \item the null and alternative hypotheses, including direction;
+  \item the study design, sample size, and important assumptions;
+  \item the estimate and an appropriate confidence interval;
+  \item the test statistic, degrees of freedom when relevant, and $p$-value;
+  \item the decision at the pre-specified $\alpha$ level; and
+  \item the magnitude and practical consequences of the estimated departure.
+\end{enumerate}
+\end{custombox}
+
+For the shaft-diameter data in the earlier example, a concise report could read:
+
+\begin{quote}
+For 16 independently sampled shafts, mean diameter was $40.18$ mm ($s=0.24$ mm). A two-sided one-sample $t$ test against the $40.00$ mm target gave $t(15)=3.00$, $p=0.009$, with a 95\% confidence interval for the mean of $[40.052,40.308]$ mm. The process mean is therefore statistically distinguishable from the target; the estimated $0.18$ mm shift should be evaluated against the manufacturing tolerance.
+\end{quote}
+
+\subsection{Interpretations to avoid}
+
+\begin{table}[htbp]
+\centering
+\caption{Common testing statements and their defensible replacements.}
+\label{tab:pvalue-interpretations}
+\begin{tabularx}{\textwidth}{@{}>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X@{}}
+\toprule
+Misleading statement & Defensible interpretation \\
+\midrule
+``The $p$-value is the probability that $H_0$ is true.'' & The $p$-value is a tail probability calculated under $H_0$. \\
+``We accept $H_0$.'' & We fail to reject $H_0$; the data do not provide sufficient evidence against it at the chosen level. \\
+``The result is significant, so the effect is important.'' & The data provide evidence of a departure; its estimated size and practical consequences must be assessed separately. \\
+``The result is not significant, so there is no difference.'' & The study did not detect a departure; the confidence interval shows which departures remain compatible with the data. \\
+``A larger $p$-value proves the model fits.'' & A large $p$-value may reflect compatibility, limited power, high variability, or an insensitive test; it does not validate every model assumption. \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\FloatBarrier
+
+Finally, the nominal significance level applies to the planned procedure. Repeating many tests and reporting only the smallest $p$-value increases false-positive risk. Formal multiple-comparison methods appear later; the general protection begins here: define the question, parameter, direction, and primary analysis before examining the outcomes.
+
+Connect hypothesis testing to estimation: a null model supplies the reference distribution, a test statistic measures discrepancy in standard-error units, and a $p$-value gives the tail area. A complete conclusion adds the interval, effect magnitude, assumptions, and context. Chapter 8 extends this to two-group and paired comparisons.

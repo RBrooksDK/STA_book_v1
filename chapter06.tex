@@ -1,10 +1,657 @@
 \chapter{Estimation and Confidence Intervals}
 \label{ch:confidence-intervals}
 
-\section{Estimators, estimates, bias, and precision}
+A sample contains incomplete information about a population. Its mean, proportion, and variance provide useful summaries, but each would change if a different random sample were collected. Statistical estimation turns those sample statistics into disciplined statements about unknown population parameters.
 
-\section{Intervals for a mean}
+Point estimation reports a single value, such as a sample mean of $48.6$ milliseconds. A single value, however, does not communicate how strongly the data determine the answer. An estimate based on 10 observations is normally less precise than one based on 1,000 comparable observations, and an estimate from a highly variable process is less precise than one from a stable process. Interval estimation adds this missing information by reporting a range of parameter values that are compatible with the sampling uncertainty.
 
-\section{Intervals for a proportion}
+Confidence intervals are built from the sampling distributions developed in the previous chapter. The standard error describes how an estimator varies across repeated samples, while a critical value determines how much of that sampling distribution is covered. The resulting interval must be interpreted as a property of a repeated procedure: the parameter is fixed, but the interval would change from sample to sample.
 
-\section{Coverage and interpretation}
+This chapter begins by distinguishing estimators from their observed estimates and by examining bias and precision. It then develops the general logic of confidence intervals and repeated-sampling coverage. We construct intervals for a population mean when the population standard deviation is known or unknown, followed by intervals for a population proportion. The final section connects interval width to engineering decisions, study design, and computational resampling.
+
+\section{Point Estimation and Precision}
+\label{sec:point-estimation}
+
+A population parameter is a fixed but usually unknown characteristic of the population model. Examples include a population mean $\mu$, variance $\sigma^2$, and proportion $p$. A statistic calculated from a random sample can be used to estimate such a parameter.
+
+\begin{definition}{Estimator and Estimate}
+An \textbf{estimator} of a parameter $\theta$ is a statistic
+\[
+    \widehat\Theta=g(X_1,\ldots,X_n)
+\]
+used to learn about $\theta$. Because it is a function of a random sample, the estimator is a random variable.
+
+After data $x_1,\ldots,x_n$ have been observed, the realised value
+\[
+    \widehat\theta=g(x_1,\ldots,x_n)
+\]
+is called an \textbf{estimate} of $\theta$.
+\end{definition}
+
+The distinction is the same as that between $\bar X$ and $\bar x$. The sample mean $\bar X$ is an estimator because it varies across possible samples. The number $\bar x=48.6$ is an estimate obtained from one particular sample.
+
+\begin{example}[ Estimates from a Monitoring Sample]\par
+An engineer randomly selects 40 transactions from a stable service and records their response times and whether each transaction violates a latency requirement. The observed sample has
+\[
+    \bar x=48.6\text{ ms},
+    \qquad
+    s=7.4\text{ ms},
+    \qquad
+    5\text{ violations}.
+\]
+The statistic $\bar X$ is an estimator of the population mean response time $\mu$, and its observed estimate is $48.6$ ms. The sample proportion $\widehat p$ is an estimator of the population violation probability $p$, and its observed estimate is
+\[
+    \widehat p=\frac{5}{40}=0.125.
+\]
+Neither estimate equals its parameter by definition. Each is the result produced by one random sample.
+\end{example}
+
+\subsection{Bias}
+
+An estimator should be centred appropriately across repeated samples. Bias measures a systematic displacement from the target parameter.
+
+\begin{definition}{Bias and Unbiasedness}
+The \textbf{bias} of an estimator $\widehat\Theta$ for a parameter $\theta$ is
+\[
+    \operatorname{Bias}(\widehat\Theta)
+      =E[\widehat\Theta]-\theta.
+\]
+The estimator is \textbf{unbiased} if
+\[
+    E[\widehat\Theta]=\theta.
+\]
+\end{definition}
+
+Unbiasedness concerns the centre of a sampling distribution, not the accuracy of every observed estimate. An unbiased estimator can be far from the parameter in one sample, especially when its sampling distribution is wide.
+
+For an i.i.d. sample with mean $\mu$, the sample mean satisfies
+\[
+    E[\bar X]=\mu,
+\]
+so $\bar X$ is unbiased for $\mu$. For independent Bernoulli observations with success probability $p$,
+\[
+    E[\widehat p]=p,
+\]
+so the sample proportion is unbiased for $p$. The sample variance $S^2$ was constructed with divisor $n-1$ so that $E[S^2]=\sigma^2$.
+
+\begin{example}[ Calibration Bias Does Not Vanish with Sample Size]\par
+Suppose a temperature sensor has a constant calibration offset of $0.6^\circ\mathrm{C}$. A measurement can be modelled as
+\[
+    X_i=\mu+0.6+\varepsilon_i,
+    \qquad E[\varepsilon_i]=0,
+\]
+where $\mu$ is the true mean temperature. The sample mean has expectation
+\[
+    E[\bar X]=\mu+0.6,
+\]
+and therefore
+\[
+    \operatorname{Bias}(\bar X)=0.6^\circ\mathrm{C}.
+\]
+Collecting more observations reduces random variation in $\bar X$, but it does not remove the calibration offset. If the offset is known, the corrected estimator
+\[
+    \bar X-0.6
+\]
+is unbiased for $\mu$. This is a design and calibration correction, not a consequence of a larger sample.
+\end{example}
+
+\subsection{Precision and standard error}
+
+Bias describes where a sampling distribution is centred. Precision describes how tightly it is concentrated. The standard error provides the relevant scale.
+
+\begin{definition}{Precision of an Estimator}
+The \textbf{precision} of an estimator refers to the amount of sampling variation it has. An estimator with a smaller variance or standard error is more precise than an estimator of the same parameter with a larger variance or standard error.
+\end{definition}
+
+For the sample mean and sample proportion,
+\[
+    \operatorname{SE}(\bar X)=\frac{\sigma}{\sqrt n}
+\]
+and
+\[
+    \operatorname{SE}(\widehat p)
+      =\sqrt{\frac{p(1-p)}{n}}.
+\]
+When the population quantities are unknown, they are replaced by suitable sample estimates. Precision improves with additional independent information, but only at a square-root rate.
+
+\begin{example}[ Averaging Independent Sensor Readings]\par
+Two independent calibrated sensors measure the same physical quantity. Each reading is unbiased for $\mu$ and has variance $9$ units$^2$. Using only the first sensor gives the estimator $X_1$ with standard error
+\[
+    \operatorname{SE}(X_1)=3.
+\]
+The average
+\[
+    \widehat\Theta=\frac{X_1+X_2}{2}
+\]
+is also unbiased, and independence gives
+\[
+\begin{aligned}
+    \operatorname{Var}(\widehat\Theta)
+      &=\frac{1}{4}\bigl(\operatorname{Var}(X_1)
+        +\operatorname{Var}(X_2)\bigr)\\
+      &=\frac{1}{4}(9+9)=4.5.
+\end{aligned}
+\]
+Thus
+\[
+    \operatorname{SE}(\widehat\Theta)=\sqrt{4.5}\approx2.12.
+\]
+Averaging the independent readings improves precision while preserving unbiasedness. If the sensors share a calibration error, independence is no longer a credible description of all uncertainty.
+\end{example}
+
+Bias and precision are separate qualities. An estimator can be unbiased but imprecise, biased but highly concentrated, or poor in both respects. A narrow confidence interval describes sampling precision under the model; it does not demonstrate that the estimator is free from systematic error.
+
+\section{Confidence Intervals and Coverage}
+\label{sec:confidence-interval-coverage}
+
+A point estimate answers the question ``What value did this sample produce?'' A confidence interval answers the additional question ``How much would that estimate vary under repeated sampling?'' The interval is calculated from random endpoints before the data are observed.
+
+\begin{definition}{Confidence Interval}
+Let $L=L(X_1,\ldots,X_n)$ and $U=U(X_1,\ldots,X_n)$ be statistics with $L\leq U$. The random interval
+\[
+    [L,U]
+\]
+is a \textbf{$100(1-\alpha)\%$ confidence interval} for a parameter $\theta$ if its coverage probability is
+\[
+    P(L\leq\theta\leq U)=1-\alpha
+\]
+under the stated population model and sampling procedure.
+\end{definition}
+
+The number $1-\alpha$ is the confidence level. Common choices are $0.90$, $0.95$, and $0.99$. After a sample is observed, $L$ and $U$ become numerical endpoints $l$ and $u$, while the parameter remains fixed.
+
+\subsection{The estimate--standard error--critical value pattern}
+
+Many confidence intervals have the form
+\[
+    \text{estimate}
+    \quad\pm\quad
+    \text{critical value}\times\text{standard error}.
+\]
+Suppose the standardised estimator is exactly or approximately standard normal:
+\[
+    Z=\frac{\widehat\Theta-\theta}
+            {\operatorname{SE}(\widehat\Theta)}
+      \approx N(0,1).
+\]
+Let $z_{1-\alpha/2}$ denote the standard normal quantile satisfying
+\[
+    P\bigl(Z\leq z_{1-\alpha/2}\bigr)=1-\frac{\alpha}{2}.
+\]
+Then
+\[
+    P\left(
+      -z_{1-\alpha/2}
+      \leq
+      \frac{\widehat\Theta-\theta}
+           {\operatorname{SE}(\widehat\Theta)}
+      \leq
+      z_{1-\alpha/2}
+    \right)
+    \approx1-\alpha.
+\]
+Rearranging gives the general interval
+\[
+    \widehat\Theta
+      \pm
+      z_{1-\alpha/2}\operatorname{SE}(\widehat\Theta).
+\]
+
+\begin{definition}{Margin of Error}
+For an interval of the form
+\[
+    \widehat\theta\pm E,
+\]
+the quantity
+\[
+    E=\text{critical value}\times\text{standard error}
+\]
+is called the \textbf{margin of error}. The total interval width is $2E$.
+\end{definition}
+
+The critical value controls confidence, while the standard error controls sampling precision. Statistical software is normally used to evaluate critical values, but their meaning is determined by the probability distribution and confidence level.
+
+\subsection{Repeated-sampling coverage}
+
+\autoref{fig:ci-coverage} illustrates repeated confidence intervals. Each horizontal line is produced from a different random sample using the same procedure. The vertical line marks the fixed population parameter. Nineteen of the twenty illustrated intervals cover the parameter; one does not.
+
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}[x=2.4cm,y=0.29cm]
+  \draw[very thick,staOrange] (0,0.2) -- (0,20.8);
+  \node[staOrange,rotate=90,anchor=south] at (0,10.5) {fixed parameter $\theta$};
+
+  \foreach \y/\lo/\hi in {
+    1/-1.40/0.60,2/-0.70/1.10,3/-1.20/0.30,4/-0.20/1.40,
+    5/-0.90/0.50,6/-1.60/0.20,8/-0.40/1.20,9/-1.00/0.70,
+    10/-0.50/0.90,11/-1.40/0.10,12/-0.80/0.80,13/-0.30/1.30,
+    14/-1.20/0.40,15/-0.60/1.00,16/-1.50/0.25,17/-0.10/1.50,
+    18/-0.90/0.65,19/-1.10/0.55,20/-0.45/1.05}
+  {
+    \draw[staViaBlue,line width=1.1pt] (\lo,\y) -- (\hi,\y);
+    \draw[staViaBlue,line width=0.8pt] (\lo,\y-0.18) -- (\lo,\y+0.18);
+    \draw[staViaBlue,line width=0.8pt] (\hi,\y-0.18) -- (\hi,\y+0.18);
+    \fill[staViaBlue] ({(\lo+\hi)/2},\y) circle (1.35pt);
+  }
+
+  \draw[red!70!black,line width=1.1pt] (0.15,7) -- (1.45,7);
+  \draw[red!70!black,line width=0.8pt] (0.15,6.82) -- (0.15,7.18);
+  \draw[red!70!black,line width=0.8pt] (1.45,6.82) -- (1.45,7.18);
+  \fill[red!70!black] (0.80,7) circle (1.35pt);
+
+  \draw[staViaBlue,line width=1.1pt] (-1.55,-1.15) -- (-1.30,-1.15);
+  \node[anchor=west,staViaBlue] at (-1.22,-1.15) {interval covers $\theta$};
+  \draw[red!70!black,line width=1.1pt] (0.25,-1.15) -- (0.50,-1.15);
+  \node[anchor=west,red!70!black] at (0.58,-1.15) {interval misses $\theta$};
+\end{tikzpicture}
+\caption{Repeated confidence intervals from the same sampling procedure. The parameter is fixed; the interval endpoints vary from sample to sample.}
+\label{fig:ci-coverage}
+\end{figure}
+
+The figure is an illustration rather than a guarantee that every group of 20 intervals contains exactly 19 successes. Coverage is a long-run probability. Over many repetitions, approximately $100(1-\alpha)\%$ of the intervals produced by a valid procedure cover the parameter.
+
+\begin{example}[ Interpreting Repeated Coverage]\par
+Suppose 1,000 independent laboratories each collect a random sample using the same design and construct a 95\% confidence interval for the mean concentration of a material. Under the model assumptions, the procedure is expected to produce approximately
+\[
+    0.95(1000)=950
+\]
+intervals that cover the fixed population mean and approximately 50 that miss it.
+
+For one realised interval, say $[18.2,19.7]$ mg/L, the frequentist statement is not that the fixed mean has probability $0.95$ of lying between the observed endpoints. The defensible statement is that the interval was produced by a procedure with 95\% coverage under repeated sampling.
+\end{example}
+
+\subsection{What determines interval width?}
+
+For an estimate--critical value--standard error interval, width is controlled by three general features, summarised in \autoref{tab:ci-width-factors}.
+
+\begin{table}[htbp]
+\centering
+\caption{Factors affecting the width of a confidence interval.}
+\label{tab:ci-width-factors}
+\begin{tabularx}{\textwidth}{@{}l>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X@{}}
+\toprule
+Change & Mathematical effect & Consequence for width \\
+\midrule
+Higher confidence level
+& Larger critical value
+& Wider interval \\
+Larger independent sample
+& Smaller standard error, commonly at rate $1/\sqrt n$
+& Narrower interval \\
+Greater population variability
+& Larger standard error
+& Wider interval \\
+More efficient estimator
+& Smaller sampling variance
+& Narrower interval for the same confidence level \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+A narrow interval is desirable only when the sampling design and model are credible. Systematic calibration error, selection bias, dependence, or process drift can produce a narrow interval around the wrong target.
+
+\section{Confidence Intervals for a Population Mean}
+\label{sec:confidence-interval-mean}
+
+The sample mean is the natural point estimator of a population mean. Its standard error is $\sigma/\sqrt n$, and the relevant critical distribution depends on whether the population standard deviation is known.
+
+\subsection{Known population standard deviation: the z interval}
+
+If a random sample comes from a normal population with known standard deviation $\sigma$, then
+\[
+    Z=\frac{\bar X-\mu}{\sigma/\sqrt n}
+      \sim N(0,1).
+\]
+Solving the central probability statement for $\mu$ gives an exact interval.
+
+\begin{theorem}{Confidence Interval for a Mean with Known Standard Deviation}
+Let $X_1,\ldots,X_n$ be an i.i.d. sample from $N(\mu,\sigma^2)$, where $\sigma$ is known. A $100(1-\alpha)\%$ confidence interval for $\mu$ is
+\[
+    \bar X
+      \pm
+      z_{1-\alpha/2}\frac{\sigma}{\sqrt n}.
+\]
+For observed data, the endpoints are
+\[
+    \bar x
+      \pm
+      z_{1-\alpha/2}\frac{\sigma}{\sqrt n}.
+\]
+\end{theorem}
+
+When the population is not normal, the same form can be an approximate interval if the central limit theorem gives an adequate approximation to the sampling distribution of $\bar X$. Known population standard deviations are uncommon in new engineering studies, but they arise when a measurement process has been characterised reliably from extensive historical data.
+
+\begin{example}[ Mean Compressive Strength with Known Variability]\par
+A civil engineer studies the compressive strength of a concrete formulation. The strength distribution is modelled as normal, and historical process validation supports a population variance of $1000$ psi$^2$, so
+\[
+    \sigma=\sqrt{1000}\approx31.62\text{ psi}.
+\]
+A random sample of 12 specimens has mean strength $\bar x=3250$ psi. The standard error is
+\[
+    \frac{\sigma}{\sqrt n}
+      =\frac{31.62}{\sqrt{12}}
+      \approx9.129\text{ psi}.
+\]
+For 95\% confidence, $z_{0.975}\approx1.960$, giving
+\[
+\begin{aligned}
+    3250\pm1.960(9.129)
+      &=3250\pm17.892\\
+      &=[3232.11,3267.89]\text{ psi}.
+\end{aligned}
+\]
+For 99\% confidence, $z_{0.995}\approx2.576$, so
+\[
+    3250\pm2.576(9.129)
+      =[3226.49,3273.51]\text{ psi}.
+\]
+The 99\% interval is wider because the procedure must cover a larger central part of the sampling distribution.
+\end{example}
+
+\subsection{Unknown population standard deviation: the t interval}
+
+In most applications, $\sigma$ is unknown and the standard error is estimated by $S/\sqrt n$. Under normal sampling,
+\[
+    T=\frac{\bar X-\mu}{S/\sqrt n}
+      \sim t_{n-1}.
+\]
+The $t$ critical value is larger than the corresponding standard normal critical value, reflecting the additional uncertainty from estimating $\sigma$.
+
+\begin{theorem}{Confidence Interval for a Mean with Unknown Standard Deviation}
+Let $X_1,\ldots,X_n$ be an i.i.d. sample from $N(\mu,\sigma^2)$, where $\sigma$ is unknown. A $100(1-\alpha)\%$ confidence interval for $\mu$ is
+\[
+    \bar X
+      \pm
+      t_{n-1,\,1-\alpha/2}\frac{S}{\sqrt n}.
+\]
+For observed data, the endpoints are
+\[
+    \bar x
+      \pm
+      t_{n-1,\,1-\alpha/2}\frac{s}{\sqrt n}.
+\]
+\end{theorem}
+
+The notation $t_{\nu,q}$ denotes the $q$ quantile of a Student $t$ distribution with $\nu$ degrees of freedom. As $\nu$ increases, the $t$ distribution approaches the standard normal distribution and its critical values approach the corresponding $z$ values.
+
+\begin{example}[ Mean Parallel-Processing Speedup]\par
+Thirteen measurements of the speedup achieved by a parallel computing architecture have
+\[
+    n=13,
+    \qquad
+    \bar x=4.313,
+    \qquad
+    s=0.4328.
+\]
+Treating the measurements as an independent sample from an approximately normal population, the estimated standard error is
+\[
+    \frac{s}{\sqrt n}
+      =\frac{0.4328}{\sqrt{13}}
+      \approx0.1200.
+\]
+For a 95\% interval with $12$ degrees of freedom,
+\[
+    t_{12,0.975}\approx2.179.
+\]
+Therefore
+\[
+\begin{aligned}
+    \bar x\pm t_{12,0.975}\frac{s}{\sqrt n}
+      &=4.313\pm2.179(0.1200)\\
+      &=4.313\pm0.262\\
+      &=[4.052,4.575].
+\end{aligned}
+\]
+The interval estimates the population mean speedup. It does not state that 95\% of individual speedup measurements lie between these endpoints.
+\end{example}
+
+\subsection{Assumptions and robustness}
+
+The one-sample $t$ interval is exact under i.i.d. normal sampling. For a non-normal population, it is commonly used as an approximation when the sample mean is approximately normal and the sample standard deviation estimates the population spread adequately.
+
+The quality of that approximation depends on more than sample size. Strong skew, heavy tails, or influential outliers can be important for small and moderate samples. Dependence and process drift affect the sampling distribution directly and are not repaired by a $t$ critical value. A graphical examination of the data and knowledge of the sampling mechanism should accompany the interval calculation.
+
+\autoref{tab:z-versus-t-mean} summarises the two mean intervals.
+
+\begin{table}[htbp]
+\centering
+\caption{Choosing between z and t intervals for one population mean.}
+\label{tab:z-versus-t-mean}
+\begin{tabularx}{\textwidth}{@{}l>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X@{}}
+\toprule
+Situation & Standard error & Critical distribution \\
+\midrule
+$\sigma$ known
+& $\sigma/\sqrt n$
+& Standard normal; exact for a normal population \\
+$\sigma$ unknown
+& $s/\sqrt n$
+& Student $t$ with $n-1$ degrees of freedom; exact for a normal population \\
+Non-normal population
+& Depends on whether $\sigma$ is known
+& Either interval may be approximate; adequacy depends on the sampling distribution of $\bar X$ \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection{Planning for a target margin of error}
+
+If $\sigma$ is known or a credible planning value is available, the margin of error of a two-sided z interval is
+\[
+    E=z_{1-\alpha/2}\frac{\sigma}{\sqrt n}.
+\]
+Solving for $n$ gives
+\[
+    n\geq
+    \left(
+      \frac{z_{1-\alpha/2}\sigma}{E}
+    \right)^2.
+\]
+The calculated value must always be rounded up because rounding down would exceed the target margin of error.
+
+\newpage
+
+\begin{example}[ Sample Size for a Vibration Study]\par
+A vibration measurement has a planning standard deviation of $8$ units. An engineer wants a 95\% confidence interval for the mean with margin of error no greater than $1$ unit. Using $z_{0.975}=1.960$,
+\[
+\begin{aligned}
+    n
+      &\geq
+      \left(\frac{1.960(8)}{1}\right)^2\\
+      &=245.86.
+\end{aligned}
+\]
+The study therefore requires at least
+\[
+    n=246
+\]
+independent observations under the planning assumptions. The calculation addresses random precision; it does not determine whether the measurements are representative or free from calibration bias.
+\end{example}
+
+When $\sigma$ is unknown, a previous study, pilot sample, engineering specification, or conservative planning value can be used. The final $t$ interval still uses the standard deviation observed in the completed study.
+
+\section{Confidence Intervals for a Population Proportion}
+\label{sec:confidence-interval-proportion}
+
+Binary outcomes occur in defect detection, reliability testing, cybersecurity monitoring, and survey data. If $X$ is the number of successes in $n$ independent Bernoulli trials with probability $p$, then
+\[
+    \widehat p=\frac{X}{n}
+\]
+is an unbiased estimator of the population proportion $p$.
+
+For sufficiently large $n$, the sample proportion has the approximate sampling distribution
+\[
+    \widehat p
+      \approx
+      N\!\left(p,\frac{p(1-p)}{n}\right).
+\]
+Replacing the unknown $p$ in the standard error by $\widehat p$ gives
+\[
+    \widehat{\operatorname{SE}}(\widehat p)
+      =\sqrt{\frac{\widehat p(1-\widehat p)}{n}}.
+\]
+
+\subsection{The normal or Wald interval}
+
+Applying the general estimate--critical value--standard error pattern gives the traditional normal interval.
+
+\begin{definition}{Wald Confidence Interval for a Proportion}
+The \textbf{Wald interval} with confidence level $100(1-\alpha)\%$ is
+\[
+    \widehat p
+      \pm
+      z_{1-\alpha/2}
+      \sqrt{\frac{\widehat p(1-\widehat p)}{n}}.
+\]
+It is an approximate interval based on the normal approximation to the sampling distribution of $\widehat p$.
+\end{definition}
+
+The approximation is most credible when the observations are independent, the probability $p$ is stable, and both the observed success and failure counts are reasonably large. Conditions such as $n\widehat p\geq10$ and $n(1-\widehat p)\geq10$ are useful diagnostics, not universal guarantees.
+
+\newpage
+
+\begin{example}[ Interval for an Authentication-Alert Rate]\par
+In a random sample of 200 authentication attempts, 24 trigger an alert. The estimated alert probability is
+\[
+    \widehat p=\frac{24}{200}=0.12.
+\]
+The estimated standard error is
+\[
+    \sqrt{\frac{0.12(0.88)}{200}}
+      \approx0.02298.
+\]
+Using $z_{0.975}=1.960$, the 95\% Wald interval is
+\[
+\begin{aligned}
+    0.12\pm1.960(0.02298)
+      &=0.12\pm0.0450\\
+      &=[0.075,0.165].
+\end{aligned}
+\]
+The procedure estimates the stable population alert probability under the assumed sampling mechanism. It does not estimate the probability that an alert represents a genuine attack; that is a different conditional probability.
+\end{example}
+
+\subsection{Why the Wald interval can fail}
+
+The Wald interval is easy to derive but can have poor coverage for small samples or proportions near 0 or 1. Its endpoints can even fall outside the parameter space $[0,1]$. A widely used improvement is the Wilson score interval.
+
+For $z=z_{1-\alpha/2}$, the Wilson interval is
+\[
+\frac{
+  \widehat p+\dfrac{z^2}{2n}
+  \quad\pm\quad
+  z\sqrt{
+    \dfrac{\widehat p(1-\widehat p)}{n}
+    +\dfrac{z^2}{4n^2}
+  }
+}{
+  1+\dfrac{z^2}{n}
+}.
+\]
+The expression is less simple than the Wald formula, but statistical software evaluates it directly. It generally provides more reliable coverage and respects the range of a proportion more effectively.
+
+\begin{example}[ Rare Defects and the Wilson Interval]\par
+Two non-conforming components are observed among 20 inspected components, so
+\[
+    \widehat p=\frac{2}{20}=0.10.
+\]
+The 95\% Wald interval is
+\[
+\begin{aligned}
+    0.10
+      \pm1.960\sqrt{\frac{0.10(0.90)}{20}}
+      &\approx0.10\pm0.131\\
+      &=[-0.031,0.231].
+\end{aligned}
+\]
+The negative lower endpoint is impossible for a probability and signals that the approximation is unsuitable.
+
+Using the Wilson formula with the same confidence level gives approximately
+\[
+    [0.028,0.301].
+\]
+The Wilson interval is asymmetric and remains within $[0,1]$. It is also wider on the upper side, reflecting the substantial uncertainty created by only two observed defects.
+\end{example}
+
+\subsection{Planning a sample size for a proportion}
+
+Using the approximate margin of error
+\[
+    E=z_{1-\alpha/2}
+      \sqrt{\frac{p(1-p)}{n}},
+\]
+the planning requirement is
+\[
+    n\geq
+    \frac{z_{1-\alpha/2}^2p(1-p)}{E^2}.
+\]
+If no credible planning value for $p$ is available, the product $p(1-p)$ is largest at $p=0.5$. Using $0.25$ therefore gives a conservative approximate sample size.
+
+For example, a 95\% interval with a target margin of error of $0.03$ requires
+\[
+\begin{aligned}
+    n
+      &\geq
+      \frac{1.960^2(0.25)}{0.03^2}\\
+      &\approx1067.11.
+\end{aligned}
+\]
+At least 1,068 independent observations are required under this conservative calculation.
+
+\section{Interpretation, Limitations, and Computational Extensions}
+\label{sec:ci-interpretation-limitations}
+
+A confidence interval combines an estimate with a model-based description of sampling uncertainty. It is valuable only when the parameter, target population, sampling mechanism, and assumptions have been stated clearly.
+
+\autoref{tab:ci-method-summary} summarises the core intervals in this chapter.
+
+\begin{table}[htbp]
+\centering
+\caption{Core confidence intervals for one population.}
+\label{tab:ci-method-summary}
+\begin{tabularx}{\textwidth}{@{}l>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X@{}}
+\toprule
+Target parameter & Core interval & Principal conditions \\
+\midrule
+Mean $\mu$, $\sigma$ known
+& z interval using $\sigma/\sqrt n$
+& Independent representative sample; exact normal model or adequate large-sample approximation \\
+Mean $\mu$, $\sigma$ unknown
+& t interval using $s/\sqrt n$
+& Independent representative sample; exact normal model or adequate approximation for the sample mean \\
+Proportion $p$
+& Wilson interval preferred in practical work; Wald interval explains the normal approximation
+& Independent Bernoulli observations with stable $p$; approximation quality checked \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection{A mean is not an individual observation}
+
+A confidence interval for $\mu$ describes uncertainty about a population mean. It does not describe the spread of individual observations and is not a prediction interval for a new observation. As $n$ grows, an interval for $\mu$ can become very narrow even when individual measurements remain highly variable. Prediction intervals require an additional allowance for the variability of a new observation and are introduced with regression modelling later in the book.
+
+\subsection{Precision is not practical importance}
+
+A narrow interval can show that an effect has been estimated precisely without showing that the effect matters in practice.
+
+\begin{example}[ A Precise but Small Energy Reduction]\par
+An energy-management intervention is estimated to reduce daily consumption by $0.8$ kWh, with a 95\% confidence interval from $0.5$ to $1.1$ kWh. The interval excludes zero, so the data support a positive average reduction under the study design.
+
+Suppose, however, that implementation costs are justified only by a reduction of at least $5$ kWh per day. The entire interval lies far below that engineering requirement. The estimated effect is statistically distinguishable from zero but not large enough to satisfy the practical decision criterion.
+\end{example}
+
+\subsection{What additional data cannot repair}
+
+Increasing $n$ reduces standard error when the additional observations contribute independent information from the same target population. It does not correct a biased sensor, a convenience sample, missing parts of the population, changing operating conditions, or duplicated measurements treated as independent. Confidence intervals quantify uncertainty under a model; they do not validate the data-generating process automatically.
+
+\subsection{Bootstrap intervals as a computational perspective}
+
+Classical intervals use a theoretical sampling distribution such as the normal or Student $t$ distribution. A bootstrap approximates sampling variation by repeatedly resampling the observed data.
+
+\begin{definition}{Bootstrap Sample}
+Given observed values $x_1,\ldots,x_n$, a \textbf{bootstrap sample} is a sample of size $n$ drawn with replacement from those observed values. Recalculating an estimator across many bootstrap samples produces a \textbf{bootstrap distribution}.
+\end{definition}
+
+Percentiles of the bootstrap distribution can be used to form a computational interval. This approach is useful when the sampling distribution is difficult to derive, and it is explored through software in the practical material. It does not create information beyond the observed sample and cannot repair a biased or unrepresentative sampling design. Its quality still depends on the observed data representing the target population adequately.
+
+Confidence intervals are procedures for converting sampling variation into a quantitative statement about precision. Their critical values, standard errors, and coverage all depend on the underlying probability model. A careful analysis therefore reports the estimate and interval together, states the target parameter and assumptions, and interprets the result in the engineering context rather than treating the interval as an automatic decision.

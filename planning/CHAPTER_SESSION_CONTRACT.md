@@ -35,7 +35,9 @@ Every numbered chapter must contain the following, scaled to the topic:
 
 This template is theory-only. Textbook chapters must not contain Python code,
 library calls, notebook workflows, software output, tutorial instructions, or
-exercises. Computational implementation belongs on the website, where each
+exercises. They may state generally that statistical software such as Python is
+normally used for numerical evaluation or plots when this helps connect theory
+with practice. Computational implementation belongs on the website, where each
 tutorial translates the chapter's mathematics into Python.
 
 Definitions, propositions/theorems, examples, and remarks should use the same
@@ -194,7 +196,8 @@ together as one reviewed decision.
   practical Poisson-count/exponential-wait link.
 - **Out of scope:** manual integration/CDF derivation, integral derivations of
   moments, Gamma/Weibull/logistic as core models, and Poisson-process theory.
-- **Sources:** Ross 5.4--5.6; old STA continuous-distribution notes; SMP
+- **Sources:** Ross 4.2, selected results from 4.4 and 4.6, and 5.4--5.6;
+  old STA continuous-distribution notes; SMP
   Session 03; existing STA1 Session 04, `response_times.csv`, and
   `component_lifetimes.csv`.
 - **Python outcome:** use SciPy CDF/SF/PPF correctly, create a QQ plot, and
@@ -205,13 +208,17 @@ together as one reviewed decision.
 
 ### Chapter 5 / Session 05 — Sampling Distributions and the Central Limit Theorem
 
-- **Purpose and outcome:** students explain why sample means vary, calculate a
-  standard error, and use simulation to understand the central limit theorem.
-- **In scope:** statistic as random variable, sampling distribution of the
-  mean, standard error, normal-population result, CLT conditions/limitations,
-  repeated-sampling simulation.
-- **Out of scope:** finite-population correction, CLT proof, and confusing the
-  raw-data distribution with the distribution of a mean.
+- **Purpose and outcome:** students distinguish a population distribution, an
+  observed sample, and a sampling distribution; calculate standard errors; and
+  explain the law of large numbers and central limit theorem.
+- **In scope:** i.i.d. random samples; statistics as random variables; exact
+  and approximate sampling distributions of the mean; sums and sample
+  proportions; standard error; the normal-population result; LLN and CLT
+  conditions/limitations; sample variance; and the normal-sampling results
+  that introduce chi-square and Student's (t).
+- **Out of scope:** finite-population correction, proofs, moment-generating
+  functions, technical convergence theory, bootstrap methods, and confusing
+  the raw-data distribution with the distribution of a mean.
 - **Sources:** Ross 6.1--6.5 (selectively); old STA sampling-distributions
   note; existing STA1 Session 05.
 - **Python outcome:** simulate repeated samples with a fixed seed, plot sample
@@ -219,24 +226,32 @@ together as one reviewed decision.
   case where the CLT is not a remedy.
 - **Assessment bridge:** Assignment 3 completes.
 - **Acceptance:** the distribution is written \(N(\mu,\sigma^2/n)\), never
-  with \(\sigma/\sqrt{n}\) in the variance position.
+  with \(\sigma/\sqrt{n}\) in the variance position; exact normal sampling is
+  clearly separated from CLT approximation; and no universal \(n\geq30\) rule
+  is stated.
 
 ### Chapter 6 / Session 06 — Estimation and Confidence Intervals
 
-- **Purpose and outcome:** students estimate means/proportions, construct and
-  correctly interpret confidence intervals, and understand interval width.
-- **In scope:** estimator versus estimate, intuitive bias, z- and t-intervals
-  for a mean, approximate proportion interval, confidence-level interpretation,
-  width versus sample size, and bootstrap as a computational check.
-- **Out of scope:** maximum likelihood, Bayesian estimation, and full bootstrap
-  theory; prediction intervals wait for Chapter 10.
+- **Purpose and outcome:** students estimate one-population means and
+  proportions, construct and correctly interpret confidence intervals, and
+  explain how coverage and interval width arise from sampling variation.
+- **In scope:** estimator versus estimate; intuitive bias and precision;
+  confidence level, margin of error and repeated-sampling coverage; z- and
+  t-intervals for one mean; sample-size planning; Wald and Wilson intervals
+  for one proportion; and bootstrap as a short computational perspective.
+- **Out of scope:** maximum likelihood, Bayesian estimation, full bootstrap
+  theory, intervals for a variance, prediction intervals, and two-sample
+  intervals; prediction and comparison methods are introduced in later chapters.
 - **Sources:** Ross 7.1, 7.3, 7.5; old STA interval-estimation note; SMP
   Session 06; existing STA1 Session 06 and `batteries.xlsx`.
-- **Python outcome:** calculate intervals with transparent inputs, bootstrap a
-  mean with a seed, and compare interval widths.
+- **Python outcome:** calculate z, t, Wald, and Wilson intervals with transparent
+  inputs; simulate repeated coverage; bootstrap a mean with a fixed generator;
+  and compare interval widths.
 - **Assessment bridge:** Assignment 4 begins.
 - **Acceptance:** no material says that a fixed parameter has a 95% probability
-  of lying in the realised frequentist interval.
+  of lying in the realised frequentist interval; no mean interval is described
+  as a range for individual observations; and the Wald interval is not presented
+  as a universally reliable practical default for a proportion.
 
 ### Chapter 7 / Session 07 — Hypothesis Testing I: Principles and One-Sample Tests
 
@@ -245,12 +260,18 @@ together as one reviewed decision.
   and practical decisions.
 - **In scope:** \(H_0\), \(H_1\), one/two-sided choices, test statistic,
   p-value, significance level, type I/II errors, intuitive power, one-sample
-  t-test, one-sample proportion test, and CI/test duality.
+  z/t tests for a mean, score and exact binomial tests for one proportion,
+  formal assessment of a normality assumption with Shapiro--Wilk and
+  Anderson--Darling as an alternative, integration with Q--Q plots,
+  CI/test duality, and practical versus statistical significance.
 - **Out of scope:** two-sample/paired design and full power-curve calculation.
 - **Sources:** Ross 8.1--8.3 and one-sample 8.6; old STA hypotheses note; SMP
   Session 07; existing STA1 Session 07 and a specification-focused dataset.
-- **Python outcome:** perform both tests with assumptions and contextual
-  conclusion; show why p-value is not \(P(H_0\mid\text{data})\).
+- **Python outcome:** perform the one-sample t and exact binomial tests with
+  assumptions and contextual conclusions; combine a Q--Q plot with a formal
+  normality test without treating it as a mechanical gatekeeper; connect the
+  large-sample proportion calculation to the score test; show why p-value is not
+  \(P(H_0\mid\text{data})\).
 - **Assessment bridge:** Assignment 4 completes.
 - **Acceptance:** examples distinguish statistical from practical significance
   and include a suitable effect/context measure where possible.
@@ -259,18 +280,21 @@ together as one reviewed decision.
 
 - **Purpose and outcome:** students choose between independent and paired
   designs, compare two groups, and report uncertainty and practical effect.
-- **In scope:** independent versus paired data, pooled versus Welch framing,
-  two-sample t-test, paired t-test, interval for a difference, effect size, and
-  practical versus statistical significance.
+- **In scope:** independent versus paired data, observational versus randomised
+  comparisons, pooled versus Welch framing, two-sample t-test, paired t-test,
+  independent two-proportion inference, intervals for differences, effect
+  measures, and practical versus statistical significance.
 - **Out of scope:** two-variance tests as a standalone topic, indiscriminate
-  repeated pairwise tests, and treating paired data as independent.
+  repeated pairwise tests, paired binary procedures, and treating paired data
+  as independent.
 - **Sources:** Ross 7.4, 8.4, and two-sample 8.6; old STA testing material;
   existing STA1 Session 08 and `cpu_order_lines.xlsx`.
 - **Python outcome:** inspect paired structure, use `ttest_ind`/`ttest_rel`
   appropriately, report a difference interval and visual comparison.
 - **Assessment bridge:** Assignment 5 begins.
-- **Acceptance:** every worked example states its design and avoids assuming
-  equal variances without justification.
+- **Acceptance:** every worked example states its design, avoids assuming equal
+  variances without justification, and distinguishes absolute from relative
+  effects for binary outcomes.
 
 ### Chapter 9 / Session 09 — Analysis of Variance
 
@@ -278,7 +302,9 @@ together as one reviewed decision.
   one-way ANOVA, check practical assumptions, and use Tukey HSD responsibly.
 - **In scope:** motivation versus many t-tests, between/within variation, ANOVA
   table, F test, independence/normality/similar-variance assumptions, one-way
-  ANOVA, and Tukey HSD.
+  ANOVA, Tukey HSD, a descriptive eta-squared effect size, and a compact
+  method-selection extension to Welch ANOVA and Games--Howell comparisons when
+  variances are materially unequal.
 - **Out of scope:** two-way ANOVA, interaction effects, and identifying pairs
   from a significant omnibus F-test alone.
 - **Sources:** Ross 10.1--10.3; STA_26 ANOVA session/site material; existing
@@ -296,16 +322,17 @@ together as one reviewed decision.
   a simple linear regression model, including the difference between mean
   response and new-observation prediction.
 - **In scope:** response/predictor roles, least squares, intercept/slope with
-  units, correlation and \(R^2\), slope inference, residual diagnostics,
-  confidence interval for mean response, prediction interval, and a limited
-  train/test illustration.
-- **Out of scope:** multiple, polynomial, and logistic regression; causal
-  inference from observational data; treating machine-learning metrics as
-  statistical inference.
+  units, residual standard deviation, correlation and \(R^2\), slope
+  inference, residual diagnostics, leverage and influence at a conceptual
+  level, confidence interval for mean response, and prediction interval.
+- **Out of scope:** matrix formulations, normal equations, gradient descent,
+  train/test splitting, machine-learning metrics, multiple, polynomial, and
+  logistic regression; causal inference from observational data.
 - **Sources:** Ross 9.1--9.2, 9.4--9.6; old STA regression note; SMP Session
   08; existing STA1 Session 10, `energy_load.csv`, and `scope_filter_intensity.xlsx`.
-- **Python outcome:** fit using statsmodels for inference and scikit-learn only
-  for the stated predictive comparison; create scatter, residual, and QQ plots.
+- **Python outcome:** fit using statsmodels for estimation and inference;
+  create scatter, residual-versus-fitted, residual-versus-order, and QQ plots;
+  obtain confidence and prediction intervals. Scikit-learn is not core.
 - **Assessment bridge:** Assignment 6 begins; group project introduced.
 - **Acceptance:** intervals are not conflated with prediction intervals, and
   \(R^2\) is not presented as causal evidence.
@@ -313,16 +340,22 @@ together as one reviewed decision.
 ### Chapter 11 / Session 11 — Categorical Data and Chi-Square Tests
 
 - **Purpose and outcome:** students analyse categorical counts using
-  goodness-of-fit and independence tests and interpret residual patterns.
+  goodness-of-fit, independence, and homogeneity tests, then interpret the
+  pattern and magnitude of departures from the null model.
 - **In scope:** categorical variables, contingency tables, expected counts,
-  goodness-of-fit, independence, chi-square statistic, expected-count
-  guideline, standardised residuals, and contextual conclusions.
+  fully specified and fitted goodness-of-fit models, simulation, independence,
+  homogeneity, chi-square statistic, expected-count guideline, Pearson and
+  adjusted residuals, Cramer's V, sparse-table alternatives, and contextual
+  conclusions, including why the Pearson statistic has an approximate
+  chi-square reference distribution.
 - **Out of scope:** Ross 11.5--11.6 and causal claims from association.
 - **Sources:** Ross 11.1--11.4; STA_26 goodness-of-fit/contingency material;
   existing STA1 Session 11 and `defect_types.csv`.
-- **Python outcome:** build `crosstab`, run `chi2_contingency` and a
-  goodness-of-fit calculation, inspect expected counts/residuals, and explain
-  limitations for sparse tables.
+- **Python outcome:** build `crosstab`, run `chi2_contingency` without silently
+  changing the target Pearson analysis, run specified and fitted
+  goodness-of-fit calculations, inspect expected counts, conditional
+  proportions and correctly named residuals, calculate Cramer's V, and
+  explain alternatives for sparse tables.
 - **Assessment bridge:** Assignment 6 completes.
 - **Acceptance:** degrees of freedom and expected-count assumptions are correct
   in text, code, and output interpretation.

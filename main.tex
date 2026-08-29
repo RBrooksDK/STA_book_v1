@@ -14,10 +14,23 @@
 \usepackage{tikz}
 \usepackage{pgfplots}
 \usepackage{placeins}
+\usepackage{needspace}
 \usepackage{mymacro}
 
 \pgfplotsset{compat=1.18}
 \input{stacolors}
+
+% Reuse the highlighted procedural box from Mathematics for Software
+% Engineering, using the identical VIA-blue palette.
+\newtcolorbox{custombox}[2][]{
+  colback=staViaBlue!5,
+  colframe=staViaBlue,
+  coltitle=white,
+  fonttitle=\bfseries,
+  colbacktitle=staViaBlue,
+  title={#2},
+  #1
+}
 
 \title{Statistics and Data Analysis for Engineers}
 \subtitle{A Theory-First Introduction with Worked Examples}

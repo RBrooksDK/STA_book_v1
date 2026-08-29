@@ -1,10 +1,497 @@
 \chapter{Analysis of Variance}
 \label{ch:anova}
 
-\section{The one-way ANOVA model}
+Comparisons are not always limited to two groups. A production engineer may compare material from several suppliers, a software engineer may evaluate more than two caching strategies, and a climate engineer may compare energy use under several control settings. The response is quantitative in each case, but the explanatory variable identifies one of several groups.
 
-\section{Between-group and within-group variation}
+It is tempting to compare every pair with a separate two-sample test. That approach creates two problems. First, the number of comparisons grows quickly: $k$ groups produce $k(k-1)/2$ pairs. Second, repeatedly testing at the same significance level increases the probability of making at least one type I error across the collection of comparisons. A procedure is needed that begins with one global question and, when appropriate, follows it with multiplicity-controlled comparisons.
 
-\section{The F-test and its assumptions}
+\textbf{Analysis of variance}, abbreviated ANOVA, addresses the global question by comparing two sources of variation. Differences among group means create between-group variation, while natural differences among observations in the same group create within-group variation. If the between-group variation is large relative to the within-group variation, a model with one common population mean becomes difficult to reconcile with the data.
 
-\section{Post-hoc comparisons}
+This chapter develops one-way ANOVA for independent groups. It explains the model, the decomposition of variation, the ANOVA table, the $F$ test, practical assumptions, and Tukey's method for identifying pairwise differences. Statistical software performs the arithmetic in realistic analyses, but the formulas reveal what the reported quantities mean and what conclusions they can support.
+
+\section{From Two Groups to Several Groups}
+\label{sec:anova-several-groups}
+
+A one-way analysis has one quantitative response and one categorical explanatory variable. The categorical variable determines the groups being compared.
+
+\begin{definition}{Factor and Levels}
+A \textbf{factor} is a categorical explanatory variable used to divide observations into groups. Its possible categories are called the \textbf{levels} of the factor.
+\end{definition}
+
+In a supplier comparison, the factor may be supplier and its levels may be A, B, and C. In a software experiment, the factor may be caching strategy with levels no cache, local cache, and distributed cache. The word \emph{one-way} means that the analysis contains one factor. It does not mean that the hypothesis test is one-sided.
+
+Let the factor have $k$ levels. Write $\mu_i$ for the population mean response at level $i$. One-way ANOVA tests
+\[
+H_0:\mu_1=\mu_2=\cdots=\mu_k
+\]
+against
+\[
+H_1:\text{not all of the population means are equal}.
+\]
+The alternative does not state that every mean differs from every other mean. It includes any configuration in which at least one pair of population means differs.
+
+\begin{definition}{Omnibus Test}
+An \textbf{omnibus test} assesses a global hypothesis involving several parameters. The one-way ANOVA $F$ test asks whether all group means can be represented by one common population mean; it does not by itself identify which means differ.
+\end{definition}
+
+This distinction determines the analysis order. The $F$ test addresses the global question. If the evidence indicates that the means are not all equal and the engineering question requires identification of particular groups, a post-hoc procedure addresses the pairwise questions while controlling error across the collection.
+
+\subsection{Why separate pairwise tests are a poor default}
+
+With three groups there are three pairwise comparisons. With five groups there are ten, and with ten groups there are 45. If every comparison is conducted as an unadjusted level-$\alpha$ test, the probability of at least one false rejection across the family is generally larger than $\alpha$. The exact probability depends on the dependence among the tests, so it is not correctly obtained by treating all pairwise statistics as independent.
+
+ANOVA does not solve every multiple-comparison problem automatically. It provides one protected global test of equality. A compatible post-hoc procedure, such as Tukey's method, is still needed when the goal is to determine which pairs differ.
+
+\section{The One-Way ANOVA Model}
+\label{sec:one-way-anova-model}
+
+Suppose level $i$ contributes $n_i$ observations,
+\[
+X_{i1},X_{i2},\ldots,X_{in_i},
+\qquad i=1,\ldots,k.
+\]
+The total number of observations is
+\[
+N=\sum_{i=1}^{k}n_i.
+\]
+The group-means formulation of the one-way model is
+\[
+X_{ij}=\mu_i+\varepsilon_{ij},
+\]
+where $\mu_i$ is the population mean for level $i$ and $\varepsilon_{ij}$ is the random deviation of observation $j$ from that mean.
+
+For the classical one-way ANOVA $F$ test, the errors are modelled as independent normal random variables with a common variance:
+\[
+\varepsilon_{ij}\sim N(0,\sigma^2).
+\]
+Equivalently,
+\[
+X_{ij}\sim N(\mu_i,\sigma^2).
+\]
+The means may differ across groups, but the classical model uses the same population variance in every group.
+
+The sample mean for group $i$ is
+\[
+\bar x_i=\frac{1}{n_i}\sum_{j=1}^{n_i}x_{ij},
+\]
+and the grand mean of all $N$ observations is
+\[
+\bar x_{\cdot\cdot}
+=\frac{1}{N}\sum_{i=1}^{k}\sum_{j=1}^{n_i}x_{ij}
+=\frac{1}{N}\sum_{i=1}^{k}n_i\bar x_i.
+\]
+The second expression shows that the grand mean is a weighted average of the group means. Larger groups receive greater weight.
+
+An observed within-group deviation is called a residual:
+\[
+e_{ij}=x_{ij}-\bar x_i.
+\]
+Residuals estimate the unobserved errors $\varepsilon_{ij}$. They are central to assessing whether the common-variance and normal-error descriptions are reasonable.
+
+\begin{definition}{Balanced and Unbalanced Designs}
+A one-way design is \textbf{balanced} when all group sample sizes are equal. It is \textbf{unbalanced} when at least two group sample sizes differ.
+\end{definition}
+
+Balance is not required, but it makes the group means contribute more symmetrically and often improves robustness when assumptions are only approximate. Unequal group sizes combined with unequal variances require particular care.
+
+\subsection{The design comes before the model}
+
+The observations must represent independent experimental or sampling units. Repeated measurements from the same machine, building, person, account, or component are not made independent by placing them in different groups in a data table. Clustered data and repeated-measures designs require methods beyond the one-way independent-groups model.
+
+Random assignment of units to factor levels can support a causal interpretation when the experimental protocol is credible. In an observational comparison, ANOVA can describe evidence of an association between group membership and the mean response, but pre-existing group differences may provide alternative explanations. Random sampling and representative measurement determine how far the result can be generalised.
+
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}
+\begin{axis}[
+  width=0.86\textwidth,
+  height=7.0cm,
+  xmin=0.55,xmax=3.45,
+  ymin=6.5,ymax=13.5,
+  xtick={1,2,3},
+  xticklabels={Supplier A,Supplier B,Supplier C},
+  ylabel={Impurity concentration (mg/kg)},
+  axis x line*=bottom,
+  axis y line*=left,
+  ymajorgrids=true,
+  grid style={staDarkText!10},
+  tick label style={font=\small},
+  label style={font=\small}
+]
+  \addplot[only marks,mark=*,mark size=2.2pt,staViaBlue]
+    coordinates {(1,8) (1,9) (1,7) (1,10)};
+  \addplot[only marks,mark=*,mark size=2.2pt,staViaBlue]
+    coordinates {(2,12) (2,11) (2,13) (2,12)};
+  \addplot[only marks,mark=*,mark size=2.2pt,staViaBlue]
+    coordinates {(3,9) (3,10) (3,8) (3,9)};
+
+  \draw[staOrange,line width=2.2pt] (axis cs:0.72,8.5) -- (axis cs:1.28,8.5);
+  \draw[staOrange,line width=2.2pt] (axis cs:1.72,12.0) -- (axis cs:2.28,12.0);
+  \draw[staOrange,line width=2.2pt] (axis cs:2.72,9.0) -- (axis cs:3.28,9.0);
+  \draw[staDarkText!65,densely dashed,line width=1.0pt]
+    (axis cs:0.62,9.833) -- (axis cs:3.38,9.833);
+\end{axis}
+\end{tikzpicture}
+\caption{Observations from three groups. Blue points are individual measurements, orange segments are group means, and the dashed line is the grand mean. ANOVA compares the separation of the group means with the variation of observations around their own group means.}
+\label{fig:anova-between-within}
+\end{figure}
+
+\FloatBarrier
+
+\newpage
+
+\section{Partitioning Variation and the \texorpdfstring{$F$}{F} Test}
+\label{sec:anova-partition-f-test}
+
+Every observation differs from the grand mean by an amount
+\[
+x_{ij}-\bar x_{\cdot\cdot}.
+\]
+This total deviation can be written as
+\[
+x_{ij}-\bar x_{\cdot\cdot}
+=
+(\bar x_i-\bar x_{\cdot\cdot})
++
+(x_{ij}-\bar x_i).
+\]
+The first term is the deviation of the group mean from the grand mean. The second is the deviation of the observation from its own group mean. ANOVA turns this observation-level decomposition into a decomposition of squared variation.
+
+\begin{definition}{ANOVA Sums of Squares}
+The \textbf{total sum of squares} is
+\[
+SS_{\text{total}}
+=\sum_{i=1}^{k}\sum_{j=1}^{n_i}
+(x_{ij}-\bar x_{\cdot\cdot})^2.
+\]
+The \textbf{between-group sum of squares} is
+\[
+SS_{\text{between}}
+=\sum_{i=1}^{k}n_i
+(\bar x_i-\bar x_{\cdot\cdot})^2,
+\]
+and the \textbf{within-group sum of squares} is
+\[
+SS_{\text{within}}
+=\sum_{i=1}^{k}\sum_{j=1}^{n_i}
+(x_{ij}-\bar x_i)^2.
+\]
+\end{definition}
+
+The group sizes appear in $SS_{\text{between}}$ because moving a group mean away from the grand mean affects every observation represented by that group. The within-group sum of squares is the sum of the squared residuals.
+
+\begin{theorem}{ANOVA Sum-of-Squares Identity}
+For any one-way dataset,
+\[
+SS_{\text{total}}
+=SS_{\text{between}}+SS_{\text{within}}.
+\]
+The associated degrees of freedom satisfy
+\[
+N-1=(k-1)+(N-k).
+\]
+\end{theorem}
+
+The identity is numerical and always holds for the stated definitions; it does not depend on normality. The distributional assumptions enter when the decomposition is used for inference.
+
+Sums of squares grow with the number of independent pieces of information. Dividing by their degrees of freedom produces mean squares:
+\[
+MS_{\text{between}}
+=\frac{SS_{\text{between}}}{k-1},
+\qquad
+MS_{\text{within}}
+=\frac{SS_{\text{within}}}{N-k}.
+\]
+The within-group mean square is also called the error mean square. Under the classical model, it estimates the common variance $\sigma^2$ whether or not the group means are equal. When $H_0$ is true, the between-group mean square also estimates $\sigma^2$. If population means differ, $MS_{\text{between}}$ tends to be enlarged by their separation.
+
+The resulting test statistic is
+\[
+F_{\mathrm{obs}}
+=\frac{MS_{\text{between}}}{MS_{\text{within}}}.
+\]
+Values close to 1 indicate that the two variance estimates are of similar size. Large values indicate that the group means are more separated than would be expected from the observed within-group variation under one common population mean.
+
+\subsection{The $F$ distribution}
+
+An $F$ distribution is a continuous probability distribution for a ratio of two independent variance estimates after appropriate scaling. It takes only nonnegative values, is generally right-skewed, and is indexed by a numerator and a denominator number of degrees of freedom.
+
+\begin{theorem}{One-Way ANOVA $F$ Test}
+Under the classical one-way normal model and
+\[
+H_0:\mu_1=\mu_2=\cdots=\mu_k,
+\]
+the statistic
+\[
+F_{\mathrm{obs}}
+=\frac{MS_{\text{between}}}{MS_{\text{within}}}
+\]
+is a realised value from an $F$ distribution with $k-1$ numerator and $N-k$ denominator degrees of freedom. The upper-tail $p$-value is
+\[
+p
+=P\!\left(
+F_{k-1,N-k}\geq F_{\mathrm{obs}}
+\mid H_0\text{ and the model assumptions}
+\right).
+\]
+\end{theorem}
+
+Only the upper tail is relevant because evidence against equal means appears when the between-group mean square is unusually large relative to the within-group mean square. Statistical software evaluates the $F$ probability; an $F$ table is not required for routine analysis.
+
+When there are exactly two groups and the equal-variance model is used, the one-way ANOVA statistic equals the square of the classical pooled two-sample $t$ statistic:
+\[
+F=t^2.
+\]
+Thus one-way ANOVA extends the equal-variance comparison of two means. It is not equivalent to Welch's unequal-variance two-sample procedure.
+
+\subsection{The ANOVA table}
+
+The calculations are conventionally organised as shown in \autoref{tab:anova-table-general}.
+
+\begin{table}[htbp]
+\centering
+\caption{The classical one-way ANOVA table.}
+\label{tab:anova-table-general}
+\begin{tabular}{@{}lcccc@{}}
+\toprule
+Source & Sum of squares & df & Mean square & Statistic \\
+\midrule
+Between groups
+& $SS_{\text{between}}$
+& $k-1$
+& $SS_{\text{between}}/(k-1)$
+& $F=MS_{\text{between}}/MS_{\text{within}}$ \\
+Within groups
+& $SS_{\text{within}}$
+& $N-k$
+& $SS_{\text{within}}/(N-k)$
+& \\
+Total
+& $SS_{\text{total}}$
+& $N-1$
+&
+& \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The table is more than a software format. It records how the observed variation is partitioned and makes the construction of the test statistic visible.
+
+\newpage
+
+\begin{example}[ Impurity Concentrations from Three Suppliers]\par
+A production engineer measures impurity concentration in four independently selected batches from each of three resin suppliers. The measurements, in mg/kg, are
+\[
+\begin{array}{c|cccc|c}
+\text{Supplier} & \multicolumn{4}{c|}{\text{observations}} & \bar x_i\\
+\hline
+A & 8 & 9 & 7 & 10 & 8.5\\
+B & 12 & 11 & 13 & 12 & 12.0\\
+C & 9 & 10 & 8 & 9 & 9.0
+\end{array}
+\]
+The grand mean is
+\[
+\bar x_{\cdot\cdot}
+=\frac{8+9+7+10+12+11+13+12+9+10+8+9}{12}
+=\frac{118}{12}
+\approx9.833.
+\]
+The between-group sum of squares is
+\[
+\begin{aligned}
+SS_{\text{between}}
+&=4(8.5-9.833)^2
+  +4(12.0-9.833)^2
+  +4(9.0-9.833)^2\\
+&\approx28.667.
+\end{aligned}
+\]
+Within each supplier, the squared residuals sum to
+\[
+\begin{aligned}
+SS_A&=(8-8.5)^2+(9-8.5)^2+(7-8.5)^2+(10-8.5)^2=5,\\
+SS_B&=(12-12)^2+(11-12)^2+(13-12)^2+(12-12)^2=2,\\
+SS_C&=(9-9)^2+(10-9)^2+(8-9)^2+(9-9)^2=2.
+\end{aligned}
+\]
+Therefore,
+\[
+SS_{\text{within}}=5+2+2=9,
+\]
+and the sum-of-squares identity gives
+\[
+SS_{\text{total}}=28.667+9=37.667.
+\]
+With $k=3$ and $N=12$, the ANOVA table is
+\[
+\begin{array}{lrrrr}
+\toprule
+\text{Source} & SS & df & MS & F\\
+\midrule
+\text{Between groups} & 28.667 & 2 & 14.333 & 14.333\\
+\text{Within groups}  &  9.000 & 9 &  1.000 & \\
+\text{Total}          & 37.667 & 11 &       & \\
+\bottomrule
+\end{array}
+\]
+For
+\[
+H_0:\mu_A=\mu_B=\mu_C,
+\]
+the statistic $F=14.333$ has $2$ and $9$ degrees of freedom under $H_0$. The upper-tail probability is approximately
+\[
+p=0.0016.
+\]
+The data provide evidence that the three population mean impurity concentrations are not all equal. The result does not yet establish which suppliers differ, nor whether supplier membership caused the differences. Those conclusions require pairwise inference and consideration of the design.
+\end{example}
+
+\newpage
+
+\section{Assumptions, Diagnostics, and Robustness}
+\label{sec:anova-assumptions}
+
+The exact classical $F$ result follows from independent normal errors with a common variance. Practical validity depends on how the data were generated as well as on the observed distributions. \autoref{tab:anova-conditions} translates the model into questions that can be investigated.
+
+\begin{table}[htbp]
+\centering
+\caption{Conditions to examine before interpreting a one-way ANOVA.}
+\label{tab:anova-conditions}
+\begin{tabularx}{\textwidth}{@{}l>{\raggedright\arraybackslash}X@{}}
+\toprule
+Condition & Practical question \\
+\midrule
+Quantitative response & Is a population mean meaningful for the measured outcome in every group? \\
+Independent observations & Are different rows genuinely independent experimental or sampling units rather than repeated, clustered, or time-dependent measurements? \\
+Representative or randomised design & Do the observations support generalisation to the target populations, or were units randomly assigned so that a causal comparison is credible? \\
+Approximately normal errors & Within each group, are residuals reasonably compatible with a normal model, especially when group sizes are small? \\
+Common population variance & Are the within-group spreads sufficiently similar for one pooled variance to represent all groups? \\
+Comparable measurement & Were definitions, instruments, timing, censoring, and missing-data handling comparable across levels? \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection{Independence and study design}
+
+Independence cannot be diagnosed reliably from a histogram, boxplot, or normality test. It follows from the sampling and experimental structure. Treating repeated observations from one unit as independent creates artificial information and usually makes standard errors too small. No transformation of the response repairs an invalid independence assumption.
+
+The observational unit must therefore be stated explicitly. If four measurements are taken from each of ten components, the study has ten independently sampled components unless the model accounts for the repeated measurements within component. It does not automatically have 40 independent components.
+
+\subsection{Normality concerns the errors within groups}
+
+The classical model describes the distribution around each group mean. Consequently, the relevant quantities are the residuals $e_{ij}=x_{ij}-\bar x_i$, not the overall response distribution formed by mixing all groups. Even perfectly normal groups can produce a multimodal combined distribution when their means differ.
+
+Group plots and residual plots can reveal strong skewness, outliers, and unequal spread. A normal quantile plot of the residuals can provide an additional diagnostic. Formal normality tests are not a mechanical gatekeeper: they may have little power in small samples and detect immaterial deviations in large samples.
+
+Classical ANOVA is often reasonably robust to moderate non-normality when group sizes are not very small and the design is balanced or nearly balanced. Severe skewness, influential outliers, heavy tails, dependence, or censoring can still undermine a mean-based analysis. There is no universal sample-size rule that overrides these features.
+
+\subsection{Common variance and unequal group sizes}
+
+The pooled within-group mean square assumes one population variance $\sigma^2$. Similar-looking sample standard deviations do not prove equality, and a preliminary variance test should not automatically decide which analysis is reported. The judgment should combine subject-matter knowledge, study design, group sizes, and plots of the group or residual distributions.
+
+Unequal variances are most problematic when group sizes are also unequal. In particular, a small high-variance group or a large low-variance group can distort the classical $F$ test. A balanced design provides protection because each group contributes comparably, but balance does not make extreme variance differences irrelevant.
+
+\begin{custombox}{When the group variances are not similar}
+Welch's one-way ANOVA provides a practical alternative when independent groups have unequal variances. It weights the group information differently and uses adjusted degrees of freedom; statistical software performs the calculation. If pairwise follow-up is needed after Welch's ANOVA, Games--Howell comparisons provide the corresponding unequal-variance approach. Ordinary Tukey comparisons use the pooled within-group variance and should not be combined automatically with a Welch omnibus analysis.
+\end{custombox}
+
+Welch's ANOVA and Games--Howell are included here as method-selection tools, not as additional hand-calculation procedures. Transformations or rank-based methods may sometimes be suitable, but they change the modelling or interpretation and are outside the core scope of this chapter.
+
+\section{Post-Hoc Comparisons and Effect Magnitude}
+\label{sec:anova-posthoc-effect}
+
+A significant omnibus result supports the statement that the population means are not all equal. It does not support statements such as ``supplier B differs from supplier A'' without a comparison designed for that pair. Inspecting the largest sample means after the test and then applying ordinary unadjusted $t$ intervals ignores the selection and multiplicity that produced the question.
+
+\subsection{Family-wise error and Tukey's method}
+
+The \textbf{family-wise error rate} is the probability of making at least one type I error among a specified family of comparisons. Tukey's method constructs simultaneous inference for every pair of population means while controlling this probability at a chosen level $\alpha$ under the classical one-way model.
+
+\begin{theorem}{Tukey--Kramer Pairwise Confidence Intervals}
+For all pairwise differences $\mu_i-\mu_j$ in a classical one-way ANOVA, a simultaneous $100(1-\alpha)\%$ Tukey--Kramer confidence interval is
+\[
+(\bar x_i-\bar x_j)
+\pm
+q_{1-\alpha;k,N-k}
+\sqrt{
+\frac{MS_{\text{within}}}{2}
+\left(\frac{1}{n_i}+\frac{1}{n_j}\right)
+},
+\]
+where $q_{1-\alpha;k,N-k}$ is a critical value from the studentized-range distribution. When all group sizes equal $n$, the margin of error reduces to
+\[
+q_{1-\alpha;k,N-k}
+\sqrt{\frac{MS_{\text{within}}}{n}}.
+\]
+\end{theorem}
+
+Statistical software evaluates the studentized-range critical value and usually reports multiplicity-adjusted $p$-values together with simultaneous confidence intervals. A pair is distinguished at family-wise level $\alpha$ when its simultaneous interval excludes zero.
+
+The usual exploratory workflow begins with the omnibus question and, when group identification is relevant, follows it with Tukey comparisons. The protection in a Tukey family comes from its simultaneous critical value, not merely from performing an $F$ test first. Comparisons formulated in advance to answer specific engineering questions are a different design problem and lie outside this introductory treatment.
+
+\begin{example}[ Locating the Supplier Differences]\par
+Return to the impurity data from the preceding example. Since all three groups have size $n=4$ and $MS_{\text{within}}=1$, the 95\% Tukey margin of error is
+\[
+q_{0.95;3,9}\sqrt{\frac{1}{4}}
+\approx3.948(0.5)
+=1.974\text{ mg/kg}.
+\]
+The pairwise results are
+\[
+\begin{array}{lrrrl}
+\toprule
+\text{Difference} & \text{estimate} & \multicolumn{2}{c}{\text{95\% simultaneous interval}} & \text{adjusted }p\\
+\midrule
+\mu_B-\mu_A &  3.50 & [ &  1.526,\ 5.474] & 0.0020\\
+\mu_C-\mu_A &  0.50 & [ & -1.474,\ 2.474] & 0.7655\\
+\mu_C-\mu_B & -3.00 & [ & -4.974,-1.026] & 0.0055\\
+\bottomrule
+\end{array}
+\]
+At the 5\% family-wise level, supplier B differs from both A and C, while A and C are not distinguished. The intervals also quantify the differences: supplier B's mean impurity concentration is estimated to exceed A's by between about 1.5 and 5.5 mg/kg and C's by between about 1.0 and 5.0 mg/kg. Failure to distinguish A and C does not establish that their population means are identical.
+\end{example}
+
+\subsection{A descriptive effect size}
+
+The omnibus $p$-value measures incompatibility with equal means under the model; it does not measure how important the group effect is. A simple descriptive effect size is
+\[
+\eta^2
+=\frac{SS_{\text{between}}}{SS_{\text{total}}}.
+\]
+It is the proportion of the observed total sum of squares represented by differences among the observed group means. For the supplier example,
+\[
+\eta^2
+=\frac{28.667}{37.667}
+\approx0.761.
+\]
+Thus about 76.1\% of the observed squared variation in this small illustrative dataset is associated with supplier-level mean differences.
+
+This value is a sample description, not the probability that supplier determines an individual measurement and not automatically the proportion causally explained by supplier. It can overstate the corresponding population effect, especially in small samples. Group means, pairwise differences, and their confidence intervals remain essential because they retain the engineering units of the response.
+
+\newpage
+
+\section{Choosing and Reporting a One-Way Analysis}
+\label{sec:anova-reporting}
+
+The method must match both the data structure and the engineering question. A classical one-way ANOVA is appropriate for a quantitative response from independent groups when a common within-group variance is a credible approximation. Welch's ANOVA is preferable when the independent groups have materially different variances. Neither method applies directly to paired, repeated, clustered, or time-dependent observations.
+
+\begin{custombox}{Seven-step analysis order for several means}
+A defensible one-way analysis proceeds in this order:
+\begin{enumerate}
+  \item state the target population, observational unit, quantitative response, factor, and factor levels;
+  \item explain how units were sampled or assigned and whether the groups contain independent observations;
+  \item report group sample sizes, means, standard deviations, and a plot showing distributions and possible outliers;
+  \item assess whether the classical common-variance model is adequate or whether Welch's unequal-variance approach is more credible;
+  \item report the omnibus hypotheses, test statistic with degrees of freedom, $p$-value, and an effect magnitude;
+  \item when particular pairs must be identified, use a compatible multiplicity-controlled procedure and report simultaneous confidence intervals; and
+  \item interpret differences in engineering units, including uncertainty, practical importance, design limitations, and the distinction between association and causation.
+\end{enumerate}
+\end{custombox}
+
+For the illustrative supplier data, a compact report could read:
+
+\begin{quote}
+Mean impurity concentration differed among the three sampled suppliers, $F(2,9)=14.33$, $p=0.0016$, with $\eta^2=0.761$ in this sample. Tukey 95\% simultaneous intervals indicated that supplier B had a higher population mean than A by an estimated 3.50 mg/kg, 95\% simultaneous CI $[1.53,5.47]$, and a higher mean than C by an estimated 3.00 mg/kg, 95\% simultaneous CI $[1.03,4.97]$. Suppliers A and C were not distinguished. The result concerns the sampled production conditions; a causal supplier effect requires a design that rules out systematic differences in batches, handling, and measurement.
+\end{quote}
+
+The report combines the global question, the pairwise questions, effect magnitude, uncertainty, and design limitations. Reporting only ``ANOVA was significant'' omits the quantities needed for an engineering decision. Conversely, presenting many pairwise decisions without the family and adjustment obscures the error rate being controlled.
+
+One-way ANOVA therefore has a clear division of labour. The variance decomposition explains the global $F$ test, multiplicity-controlled intervals locate relevant group differences, and study design determines what those numerical results can mean. The next chapter replaces categorical group membership with a quantitative explanatory variable and develops simple linear regression.

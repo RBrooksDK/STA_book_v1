@@ -22,7 +22,7 @@ This internal guide is the shared contract for the STA1 website, tutorials, note
 
 | Artifact | Primary responsibility |
 | --- | --- |
-| Textbook | durable theory, definitions, results, derivations at STA1 level, figures, and many worked formula-based examples; no Python, tutorials, exercises, or platform instructions |
+| Textbook | durable theory, definitions, results, derivations at STA1 level, figures, and many worked formula-based examples; no Python code, tutorials, exercises, or platform instructions |
 | Session page | preparation, session focus, links, learning outcomes, material and assessment connection |
 | Tutorial/notebook | guided practical analysis and executable Python |
 | Assignment | a bounded analysis that students can defend orally |
@@ -31,6 +31,12 @@ This internal guide is the shared contract for the STA1 website, tutorials, note
 Each textbook chapter opens with a continuous, theory-oriented introduction that motivates the subject and previews its conceptual progression. Do not add a separate “Engineering question and learning outcomes” section; learning outcomes and session framing belong on the course website.
 
 Number chapters and sections only. Subsections and lower-level headings remain unnumbered; this is enforced globally with `\setcounter{secnumdepth}{1}` rather than relying on authors to choose starred heading commands.
+
+During chapter drafting, compile only the active chapter for faster PDF checks:
+comment out the other chapter and part inputs in `main.tex`, set the chapter
+counter so the active chapter retains its final number, and omit the bibliography
+unless it is needed for that draft. Before committing or pushing a release,
+restore the complete book build and regenerate the full `main.pdf`.
 | Course-site reference page | logistics, conventions, literature, datasets and exam information |
 
 The website should not duplicate whole textbook sections. The textbook should not contain semester dates, release schedules or platform instructions.
@@ -50,6 +56,7 @@ definition, theorem, and example reference. Do not write constructions such as
 - **Remark:** clarification, nuance or connection.
 - **Warning/Common mistake:** a specific recurring misconception, used sparingly.
 - **Summary:** a compact conceptual and procedural recap.
+- **Custom box:** a short, high-value procedure, reporting checklist, or method-selection sequence that students should be able to locate quickly. Use the MSE-style `custombox` environment with a descriptive title; do not box ordinary exposition.
 - **Exercises:** belong on the STA1 course website, not in the textbook.
 
 The textbook is a standalone theory book in the style of *Mathematics for
@@ -57,6 +64,13 @@ Software Engineering*. Python implementations, simulations, notebooks, and
 software-specific instructions belong exclusively in website tutorials. A
 chapter should normally explain each important formula and follow it with one
 or more worked numerical or engineering examples.
+
+The textbook may state, where pedagogically useful, that statistical software
+such as Python is normally used to produce plots or evaluate probabilities,
+summaries, and quantiles. Such remarks explain the relationship between theory
+and practice but must not include code, package or function names, software
+output, or executable workflow. Model choice, event formulation, assumptions,
+and interpretation remain part of the theoretical explanation.
 
 Do not label procedural advice as a theorem. The textbook does not include
 formal proofs or `proof` environments, because proofs are not part of STA1.
