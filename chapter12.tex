@@ -1,12 +1,404 @@
-\chapter{Integrated Statistical Analysis and Exam Preparation}
+\chapter{Planning and Reporting a Statistical Analysis}
 \label{ch:integrated-analysis}
 
-\section{From question to data audit}
+A statistical method is only one link in a longer chain of reasoning. An engineering analysis begins with a decision or question, continues through study design and data collection, and ends with an interpretation that acknowledges uncertainty and limitations. A technically correct calculation cannot repair a vague question, dependent observations treated as independent, an invalid measurement process, or a conclusion that extends beyond the sampled conditions.
 
-\section{Method selection}
+The preceding chapters developed individual tools for description, estimation, comparison, modelling, and categorical analysis. This chapter introduces no new probability distribution or testing procedure. Instead, it brings those tools together into a coherent workflow. The objective is to select analyses because they answer a well-defined question, to connect every result to the way the data were obtained, and to communicate evidence in a form that can support an engineering decision.
 
-\section{Assumptions, uncertainty, and limitations}
+A complete analysis is not the analysis containing the greatest number of methods. It is the analysis in which every table, plot, estimate, interval, and test has a clear purpose. Often one primary method, supported by careful descriptive analysis and diagnostics, provides a stronger argument than a collection of unrelated calculations.
 
-\section{Communicating a recommendation}
+\section{From an Engineering Question to a Statistical Question}
+\label{sec:engineering-to-statistical-question}
 
-\section{Integrated worked case study}
+Engineering questions are commonly expressed in terms of actions: whether a design should be adopted, whether a process is stable enough, whether a supplier meets a requirement, or whether two operating strategies perform differently. Statistical analysis requires those questions to be translated into quantities that could vary from sample to sample.
+
+The translation begins by identifying six elements:
+\begin{enumerate}
+  \item the \textbf{decision or purpose} that motivates the analysis;
+  \item the \textbf{target population or operating conditions} to which the conclusion should apply;
+  \item the \textbf{observational unit}, such as a component, building, shipment, user request, production run, or time period;
+  \item the \textbf{response and explanatory variables}, including their units and how they are measured;
+  \item the \textbf{population quantity} to be estimated or compared, such as a mean, proportion, mean difference, slope, or set of category probabilities; and
+  \item the \textbf{reference value or practical threshold} against which the result will be interpreted.
+\end{enumerate}
+
+The population quantity must match the decision. If the concern is the expected lifetime of a component, the population mean may be relevant. If the concern is the proportion of components that fail before a warranty limit, a population proportion is more directly connected to the decision. If two processes are compared, the target is a difference rather than two unrelated summaries.
+
+\begin{custombox}{Question formulation before analysis}
+Before calculating a statistic, state the analysis in one sentence:
+\begin{quote}
+For \emph{[target population]}, estimate or test \emph{[population quantity]} using \emph{[observational units and variables]}, and interpret it relative to \emph{[engineering reference or decision threshold]}.
+\end{quote}
+This sentence does not determine the method by itself, but it exposes missing information before software produces an apparently precise answer.
+\end{custombox}
+
+\begin{example}[ Converting a Design Objective into a Statistical Question]\par
+A production manager asks whether a new calibration procedure is ``better.'' The word better is not yet measurable. If the primary concern is dimensional accuracy, a suitable statistical question could be:
+
+\begin{quote}
+For components produced under normal operating conditions, estimate the change in mean absolute dimensional error when the same machine uses the new rather than the current calibration procedure.
+\end{quote}
+
+The machine or production run must then be identified as the observational unit, the order of the two procedures must be controlled, and the size of a practically valuable reduction must be stated. A separate question would be required if ``better'' instead meant a lower defect probability, less variability, shorter setup time, or lower cost.
+\end{example}
+
+A statistical question should normally be chosen before detailed results are inspected. Questions created after seeing an unusual pattern can be useful for exploration, but they should be labelled as exploratory and investigated with new data when the decision is important.
+
+\section{Data Audit and Exploratory Analysis}
+\label{sec:data-audit-exploration}
+
+The first analysis of a dataset is an audit rather than a hypothesis test. Its purpose is to determine what each row represents, whether the recorded values are credible, and whether the structure of the dataset agrees with the intended study design. This step often requires more engineering knowledge than statistical calculation.
+
+\begin{table}[htbp]
+\centering
+\caption{Core questions in a statistical data audit.}
+\label{tab:integrated-data-audit}
+\begin{tabularx}{\textwidth}{@{}l>{\raggedright\arraybackslash}X@{}}
+\toprule
+Audit element & Questions to answer \\
+\midrule
+Provenance & Who or what generated each observation, under which protocol, and during which operating period? \\
+Units and coding & Are numerical units consistent, and are category labels defined and mutually exclusive? \\
+Observational units & Does each row represent an independent unit, a repeated measurement, a matched unit, or an aggregate? \\
+Completeness & Which values are missing, censored, excluded, or unavailable, and could the mechanism be related to the outcome? \\
+Validity & Are values within physically and logically possible ranges, and are duplicated identifiers or impossible combinations present? \\
+Order and dependence & Could time order, spatial proximity, batches, users, machines, buildings, or repeated runs create dependence? \\
+Comparability & Were groups measured with the same instruments, definitions, timing, and operating conditions? \\
+Traceability & Can every transformation, exclusion, and derived variable be explained and reproduced? \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\FloatBarrier
+
+An unusual value is not automatically an error. It may be a transcription mistake, a sensor failure, a rare but valid operating condition, or evidence that the assumed model is incomplete. The value should be investigated using the measurement record and engineering context. Deleting it solely because it weakens a desired conclusion changes the question after observing the answer.
+
+Missing observations require similar care. Removing incomplete rows is convenient, but it can distort an analysis when missingness is related to the response. For example, failed sensors may be precisely the units with the most extreme measurements, and users experiencing the longest response times may abandon a request before the time is recorded. The number and pattern of missing values should therefore be reported, together with the rule used to handle them.
+
+After the structural audit, descriptive statistics and plots reveal the empirical shape of the data. Frequencies and bar charts describe categorical variables. Means, medians, standard deviations, quartiles, histograms, boxplots, and quantile plots describe quantitative variables. Scatterplots examine relationships between quantitative variables, while side-by-side plots or plots of paired differences preserve the structure of comparisons. The methods of \bookchapterref{1}{ch:data-descriptive-statistics} are not preliminary decoration; they determine whether later summaries are meaningful.
+
+Exploration can reveal skewness, clusters, nonlinearity, changing variation, or possible dependence. It can also suggest new scientific questions. It cannot by itself distinguish a reproducible pattern from one found because many features were inspected. The analysis should therefore distinguish observations that were anticipated from patterns discovered during exploration.
+
+\begin{custombox}{Data audit before formal modelling}
+A defensible analysis should be able to answer the following questions:
+\begin{enumerate}
+  \item What does one row represent?
+  \item Which observations can reasonably be treated as independent?
+  \item Are units, category definitions, and measurement procedures consistent?
+  \item How many values are missing or excluded, and why?
+  \item Which observations are unusual, and what does the source record show?
+  \item Do plots support the numerical summaries and the proposed model?
+  \item Which transformations or derived quantities were created before analysis?
+\end{enumerate}
+\end{custombox}
+
+\section{Selecting an Appropriate Method}
+\label{sec:integrated-method-selection}
+
+Method selection begins with the population quantity and the structure of the observations, not with a menu of procedures. The same dataset can support different questions, and the same question can require different methods under different designs. Two columns of measurements, for example, may represent independent groups, paired observations, or a response and predictor. Those structures lead to different analyses.
+
+\begin{table}[htbp]
+\centering
+\small
+\caption{A question-based guide to the core methods developed in this book.}
+\label{tab:integrated-method-guide}
+\begin{tabularx}{\textwidth}{@{}>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X@{}}
+\toprule
+Statistical objective & Data structure and target quantity & Core method \\
+\midrule
+Describe observed quantitative data & One or more quantitative variables; empirical centre, spread, shape, or relationship & Descriptive statistics and plots, \bookchapterref{1}{ch:data-descriptive-statistics} \\
+Describe uncertainty before data are observed & Specified random experiment or random variable & Probability models, \bookchapterref{2}{ch:probability-data-analysis}--\bookchapterref{4}{ch:continuous-distributions} \\
+Estimate one population mean or proportion & One quantitative or binary sample; $\mu$ or $p$ & Confidence interval, \bookchapterref{6}{ch:confidence-intervals} \\
+Assess one population claim or threshold & One quantitative or binary sample; comparison with $\mu_0$ or $p_0$ & One-sample test, \bookchapterref{7}{ch:hypothesis-testing-one-sample} \\
+Compare two populations or conditions & Independent groups or paired observations; mean or proportion difference & Two-group procedures, \bookchapterref{8}{ch:two-group-tests} \\
+Compare several population means & Quantitative response and one categorical factor with at least three levels & Analysis of variance, \bookchapterref{9}{ch:anova} \\
+Describe a linear quantitative relationship & Quantitative response and predictor; slope, mean response, or prediction & Simple linear regression, \bookchapterref{10}{ch:linear-regression} \\
+Compare categorical counts & One categorical distribution or a table of two classifications & Chi-square procedures, \bookchapterref{11}{ch:categorical-data} \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\FloatBarrier
+
+The table identifies a starting point, not an automatic rule. A method is justified only when its assumptions match the design and the intended interpretation. A two-sample procedure cannot be used merely because two groups are displayed. Regression cannot establish causation merely because a slope differs from zero. Analysis of variance does not explain which groups differ without planned comparisons or suitable follow-up analysis. A chi-square test does not repair categories that were created after the counts were inspected.
+
+\begin{custombox}{Method-selection questions}
+Before choosing a formal procedure, determine:
+\begin{enumerate}
+  \item whether the response is quantitative, binary, or categorical;
+  \item whether the objective is description, estimation, comparison, association, or prediction;
+  \item whether observations are independent, paired, repeated, clustered, or ordered in time;
+  \item how many populations, conditions, or explanatory variables are involved;
+  \item which population quantity directly answers the engineering question; and
+  \item whether the available design supports description, association, generalisation, or a causal conclusion.
+\end{enumerate}
+\end{custombox}
+
+One primary analysis should normally correspond to the primary question. Supplementary analyses may clarify mechanism, robustness, or practical relevance, but each needs its own purpose. Repeating several methods until one produces a small $p$-value weakens the evidential interpretation because the selected result no longer represents the originally stated question.
+
+The direction of a difference must also be fixed. If improvement is defined as $\mu_1-\mu_2>0$, the order should remain unchanged in estimates, confidence intervals, tests, tables, and prose. Switching the order halfway through an analysis is a common source of incorrect conclusions.
+
+\section{Assumptions and Analysis Strategy}
+\label{sec:integrated-assumptions-strategy}
+
+Assumptions describe the conditions under which a statistical result has its stated interpretation. Some concern a probability distribution, but many concern the data-generating process and cannot be checked by a plot or a test.
+
+\begin{table}[htbp]
+\centering
+\caption{Assumptions connect statistical calculations to the study that generated the data.}
+\label{tab:integrated-assumption-families}
+\begin{tabularx}{\textwidth}{@{}l>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X@{}}
+\toprule
+Assumption family & Typical concern & Main source of evidence \\
+\midrule
+Representation & The observations may not describe the intended population or operating range. & Sampling mechanism, inclusion rules, and engineering scope \\
+Independence & Repeated units, batches, sites, users, or time order may create dependence. & Study design, identifiers, run order, and domain knowledge \\
+Measurement & Calibration, resolution, censoring, or changed definitions may create systematic error. & Measurement protocol, instrument records, and audit trail \\
+Distributional form & Skewness, heavy tails, outliers, nonlinearity, or unequal spread may conflict with a model. & Histograms, boxplots, quantile plots, scatterplots, and residual diagnostics \\
+Approximation & A sample or expected count may be too small for an asymptotic reference distribution. & Sample sizes, expected counts, simulation, and method-specific conditions \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\FloatBarrier
+
+No single diagnostic produces a certificate that all assumptions are true. A normal probability plot addresses distributional shape, not independence or representative sampling. A large sample can make some approximations accurate, but it does not remove bias, dependence, confounding, or invalid measurement. Conversely, a minor visible departure from a model need not make a procedure useless when the method is robust and the resulting conclusion is not sensitive to that departure.
+
+An analysis strategy should be stated before the final calculations when possible. A \textbf{confirmatory} analysis evaluates a question, direction, and method chosen independently of the observed result. An \textbf{exploratory} analysis searches for patterns that may motivate later investigation. Both are valuable, but they carry different evidential weight. Presenting an exploratory discovery as if it had been specified in advance exaggerates its reliability.
+
+The distinction becomes especially important when many variables, subgroups, models, or tests are examined. Even under null models, some estimates will appear large and some $p$-values will appear small by chance. The remedy is not to hide the exploration. The report should identify the primary analysis, describe the extent of supplementary analysis, and treat unplanned patterns as hypotheses for future data unless an appropriate multiplicity strategy was specified.
+
+\begin{custombox}{Analysis strategy before calculation}
+A concise analysis strategy records:
+\begin{enumerate}
+  \item the primary statistical question and population quantity;
+  \item the practical reference value or decision threshold;
+  \item the sampling or assignment structure and observational unit;
+  \item the descriptive displays and primary inferential method;
+  \item the assumptions and diagnostics that will be examined;
+  \item the treatment of missing values, unusual observations, and exclusions; and
+  \item any planned supplementary or sensitivity analyses.
+\end{enumerate}
+\end{custombox}
+
+Statistical software can execute this strategy, but it cannot supply its scientific justification. It can calculate every test available for a dataset without knowing which question was asked, which rows belong to the same unit, or whether a difference matters in practice.
+
+\section{Interpreting the Complete Result}
+\label{sec:integrated-result-interpretation}
+
+A complete statistical result combines magnitude, uncertainty, model evidence, diagnostics, and practical context. None of these components should be interpreted in isolation.
+
+\begin{table}[htbp]
+\centering
+\caption{Complementary components of a statistical interpretation.}
+\label{tab:integrated-result-components}
+\begin{tabularx}{\textwidth}{@{}l>{\raggedright\arraybackslash}X@{}}
+\toprule
+Component & Question it answers \\
+\midrule
+Point estimate & What magnitude and direction are suggested by the observed sample? \\
+Confidence interval & Which population values remain reasonably compatible with the estimate and its sampling uncertainty? \\
+Test statistic and $p$-value & How extreme is the observed statistic, or one more extreme in the direction specified by $H_1$, if $H_0$ and the model assumptions are true? \\
+Effect magnitude & Is the estimated difference, association, or variation important in engineering units or relative terms? \\
+Diagnostics & Do the data reveal important conflict with the design or model assumptions? \\
+Sensitivity & Does a defensible alternative treatment of assumptions or unusual observations materially change the conclusion? \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\FloatBarrier
+
+A small $p$-value does not measure the probability that the null hypothesis is true, and it does not measure the size of an effect. With a sufficiently precise study, an operationally negligible difference can produce a small $p$-value. With a small or highly variable sample, an important difference can remain uncertain. Estimates and confidence intervals therefore carry information that a threshold decision based on the $p$-value alone conceals.
+
+Practical importance should be stated in the units of the problem whenever possible. A reduction of 12 milliseconds, 0.8 percentage points, 1.4 kWh per cycle, or 3.2 MPa can be compared with service requirements, safety margins, cost, or tolerances. Standardised effects and relative measures may supplement that interpretation, but they should not replace a domain-relevant scale.
+
+Uncertainty also constrains decisions. A confidence interval that contains both a negligible effect and a valuable effect indicates that the data do not yet distinguish between those possibilities. This is different from evidence that the effect is exactly zero. The appropriate response may be to collect more information, improve the design, or make a reversible decision while monitoring future performance.
+
+The conclusion must remain within the scope of the study. Random assignment can support a causal comparison within the experimental conditions. Representative sampling can support generalisation to a target population. An observational association, however precisely estimated, does not by itself establish a causal mechanism. An experiment on one hardware platform does not automatically establish performance on every platform.
+
+\section{Communicating Conclusions and Limitations}
+\label{sec:integrated-communication}
+
+A statistical report should allow another reader to reconstruct the argument from question to recommendation. The main result should not be hidden behind a sequence of software outputs, and the report should not require the reader to guess which analysis was primary.
+
+\begin{custombox}{Seven-step analysis-to-recommendation workflow}
+A clear report proceeds in this order:
+\begin{enumerate}
+  \item state the engineering objective, target population, observational unit, and primary statistical question;
+  \item describe how observations were sampled, assigned, measured, paired, or grouped;
+  \item report sample sizes, missingness, exclusions, and the most relevant descriptive statistics and plots;
+  \item name and justify the primary method, including the direction of comparisons and the assumptions examined;
+  \item report estimates, confidence intervals, and any test statistic, degrees of freedom, and $p$-value required by the question;
+  \item interpret magnitude, uncertainty, diagnostics, and practical significance in context; and
+  \item state a proportionate recommendation together with specific limitations and any need for further evidence.
+\end{enumerate}
+\end{custombox}
+
+Tables and figures should each answer a question. A caption should state what is displayed and, when appropriate, identify the main pattern without claiming more than the display establishes. Decorative plots, duplicated summaries, and unlabelled software screenshots make the evidence harder to assess. Axes require quantities and units; tables require meaningful precision and sample sizes.
+
+Limitations should be specific. Phrases such as ``more data are needed'' or ``the sample may be biased'' are too vague unless the report explains which population is under-represented, which dependency is unresolved, which operating conditions were absent, or which effect remains too imprecise. A limitation is most useful when its likely consequence for the conclusion is described.
+
+Recommendations should use language proportional to the evidence. Data may \emph{support} a process change, \emph{suggest} a relationship, show that a result is \emph{consistent with} a specified effect, or provide \emph{insufficient evidence} to distinguish relevant possibilities. Words such as \emph{prove}, \emph{guarantee}, and \emph{cause} require conditions that most observational studies cannot provide.
+
+\begin{example}[ From Software Output to an Engineering Statement]\par
+The statement ``the test was significant, $p=0.012$'' omits the direction, magnitude, uncertainty, method, and population. A more informative statement is:
+
+\begin{quote}
+For the 48 independently sampled production runs, the modified setting reduced mean cycle time by an estimated 3.6 seconds relative to the current setting, 95\% CI $[0.8,6.4]$ seconds, using Welch's two-sample procedure. The interval excludes zero but includes reductions smaller than the pre-specified five-second operational target. The data therefore support a real average reduction under the sampled conditions, but do not establish that the target improvement is achieved.
+\end{quote}
+
+The second statement separates statistical evidence from the engineering threshold and makes the remaining uncertainty visible.
+\end{example}
+
+\section{Integrated Worked Example}
+\label{sec:integrated-worked-example}
+
+This example illustrates how the preceding elements form one statistical argument. It deliberately uses only the methods needed for the question.
+
+\subsection{Engineering objective and study design}
+
+A building-services team is considering a new control algorithm for commercial heat-pump systems. Under a standard two-hour operating cycle, the new algorithm should reduce mean electrical energy use by more than 1.0 kWh per system. Twelve systems are sampled from the service portfolio. Each system completes the same controlled cycle once with the current algorithm and once with the proposed algorithm; the configuration order is randomised within each system.
+
+Let
+\[
+D_i=X_{i,\mathrm{current}}-X_{i,\mathrm{proposed}},
+\]
+so that a positive difference represents an energy reduction. The population quantity is the mean paired reduction $\mu_D$ for systems and operating conditions represented by the sampling and test protocol. The primary hypotheses are
+\[
+H_0:\mu_D\leq 1.0
+\qquad\text{against}\qquad
+H_1:\mu_D>1.0.
+\]
+The direction and the 1.0 kWh threshold are determined by the engineering requirement, not by the observed data.
+
+The same systems are measured under both algorithms, so the observations are paired. Treating the two columns as independent samples would discard the within-system connection and use the wrong sampling uncertainty. Randomising configuration order reduces the risk that warm-up, battery state, or environmental drift is systematically associated with one algorithm.
+
+\subsection{Audit and descriptive evidence}
+
+The recorded energy use is shown in \autoref{tab:heat-pump-paired-data}. System identifiers are unique, the units are consistent, and no observations are missing. The protocol record confirms that each pair comes from one system under the two configurations.
+
+\begin{table}[htbp]
+\centering
+\caption{Energy use in kWh during the standard operating cycle.}
+\label{tab:heat-pump-paired-data}
+\begin{tabular}{@{}rrrr@{}}
+\toprule
+System & Current & Proposed & Difference $D$ \\
+\midrule
+1  & 18.4 & 17.6 & 0.8 \\
+2  & 19.1 & 18.0 & 1.1 \\
+3  & 20.3 & 19.9 & 0.4 \\
+4  & 21.0 & 19.5 & 1.5 \\
+5  & 21.7 & 20.8 & 0.9 \\
+6  & 22.4 & 20.7 & 1.7 \\
+7  & 23.1 & 22.1 & 1.0 \\
+8  & 24.0 & 22.1 & 1.9 \\
+9  & 25.2 & 23.9 & 1.3 \\
+10 & 26.1 & 23.9 & 2.2 \\
+11 & 27.3 & 25.5 & 1.8 \\
+12 & 28.0 & 25.6 & 2.4 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}
+\begin{axis}[
+  width=0.72\textwidth,
+  height=0.42\textwidth,
+  xmin=-0.12,xmax=1.12,
+  ymin=16.5,ymax=29.0,
+  xtick={0,1},
+  xticklabels={Current,Proposed},
+  ylabel={Energy use (kWh)},
+  grid=major,
+  grid style={staViaBlue!10},
+  axis line style={staDarkText!60},
+  tick label style={font=\small},
+  label style={font=\small}
+]
+\addplot[staViaBlue!55,line width=0.7pt,mark=*,mark size=1.8pt] coordinates {(0,18.4) (1,17.6)};
+\addplot[staViaBlue!55,line width=0.7pt,mark=*,mark size=1.8pt] coordinates {(0,19.1) (1,18.0)};
+\addplot[staViaBlue!55,line width=0.7pt,mark=*,mark size=1.8pt] coordinates {(0,20.3) (1,19.9)};
+\addplot[staViaBlue!55,line width=0.7pt,mark=*,mark size=1.8pt] coordinates {(0,21.0) (1,19.5)};
+\addplot[staViaBlue!55,line width=0.7pt,mark=*,mark size=1.8pt] coordinates {(0,21.7) (1,20.8)};
+\addplot[staViaBlue!55,line width=0.7pt,mark=*,mark size=1.8pt] coordinates {(0,22.4) (1,20.7)};
+\addplot[staViaBlue!55,line width=0.7pt,mark=*,mark size=1.8pt] coordinates {(0,23.1) (1,22.1)};
+\addplot[staViaBlue!55,line width=0.7pt,mark=*,mark size=1.8pt] coordinates {(0,24.0) (1,22.1)};
+\addplot[staViaBlue!55,line width=0.7pt,mark=*,mark size=1.8pt] coordinates {(0,25.2) (1,23.9)};
+\addplot[staViaBlue!55,line width=0.7pt,mark=*,mark size=1.8pt] coordinates {(0,26.1) (1,23.9)};
+\addplot[staViaBlue!55,line width=0.7pt,mark=*,mark size=1.8pt] coordinates {(0,27.3) (1,25.5)};
+\addplot[staViaBlue!55,line width=0.7pt,mark=*,mark size=1.8pt] coordinates {(0,28.0) (1,25.6)};
+\addplot[staOrange,line width=2.0pt,mark=square*,mark size=2.7pt] coordinates {(0,23.05) (1,21.6333)};
+\end{axis}
+\end{tikzpicture}
+\caption{Paired energy measurements for the twelve systems. Thin blue lines preserve the within-system pairing; the thick orange line connects the two sample means.}
+\label{fig:heat-pump-paired-plot}
+\end{figure}
+
+\FloatBarrier
+
+All twelve differences are positive, ranging from 0.4 to 2.4 kWh. Their median is 1.4 kWh, and no difference is isolated from the remaining values. The sample summaries are
+\[
+\overline X_{\mathrm{current}}=23.050,
+\qquad
+\overline X_{\mathrm{proposed}}=21.633,
+\]
+and
+\[
+\overline D=1.4167,
+\qquad
+S_D=0.6043,
+\qquad
+n=12.
+\]
+The raw means describe the two configurations, while the mean and standard deviation of the differences determine the paired inference.
+
+\subsection{Primary inference}
+
+The paired differences are observations from twelve different systems. Their ordered values show no extreme outlier or severe asymmetry, so a one-sample $t$ procedure for the mean difference is a reasonable model under the sampling and protocol assumptions. The estimated standard error is
+\[
+\operatorname{SE}(\overline D)
+=\frac{S_D}{\sqrt n}
+=\frac{0.6043}{\sqrt{12}}
+=0.1744\ \text{kWh}.
+\]
+
+The test statistic compares the observed mean reduction with the practical threshold of 1.0 kWh:
+\[
+t_{\mathrm{obs}}
+=\frac{\overline D-1.0}{S_D/\sqrt n}
+=\frac{1.4167-1.0}{0.1744}
+=2.389.
+\]
+With 11 degrees of freedom, the one-sided $p$-value is
+\[
+p=P(T_{11}\geq 2.389)\approx0.018.
+\]
+At the boundary value $\mu_D=1.0$ and under the model assumptions, a sample mean at least this far above the boundary, relative to its estimated standard error, would occur with probability about 0.018. For mean reductions below 1.0 kWh, that upper-tail probability would be smaller. The boundary therefore determines the $p$-value for the composite null hypothesis.
+
+A two-sided 95\% confidence interval for the mean reduction is
+\[
+1.4167\pm t_{0.975,11}(0.1744)
+=1.4167\pm2.201(0.1744)
+=[1.033,1.801]\ \text{kWh}.
+\]
+The interval lies above zero and, more importantly for this decision, above the pre-specified 1.0 kWh requirement. It also shows the remaining uncertainty: the population mean reduction could plausibly be only slightly above the requirement or as large as approximately 1.8 kWh under the model.
+
+\subsection{Interpretation, limitations, and recommendation}
+
+The analysis supports a mean energy reduction greater than 1.0 kWh per standard cycle for systems and conditions represented by the study. The evidence concerns a population mean. It does not imply that every individual system saves more than 1.0 kWh; three of the twelve observed reductions are below that value, and one equals it.
+
+The paired and randomised-order design strengthens the comparison between algorithms under the controlled cycle. Important limitations remain. The sample contains only twelve systems, long-term seasonal operation was not observed, and the controlled cycle may not represent every building load or maintenance condition. The result also concerns energy use; reliability, comfort, installation cost, and control stability require separate evidence.
+
+\Needspace{0.38\textheight}
+A compact final statement could read:
+
+\begin{quote}
+Across twelve sampled heat-pump systems tested under both configurations in randomised order, the proposed control algorithm reduced mean energy use by 1.42 kWh per standard cycle, 95\% CI $[1.03,1.80]$ kWh. Relative to the pre-specified 1.0 kWh requirement, the paired test gave $t(11)=2.39$, one-sided $p=0.018$. The paired differences showed no extreme value or severe asymmetry. These results support a mean reduction exceeding the requirement under the tested conditions. A staged implementation with continued field monitoring is warranted because the sample is small and does not cover long-term seasonal operation, reliability, or every system type in the service portfolio.
+\end{quote}
+
+No analysis of variance, chi-square test, or regression is added to this example because none is required by the primary question. Such methods would be justified only by additional questions and suitable data. The integration lies in the connection among the decision threshold, paired design, audit, descriptive evidence, model assumptions, estimate, uncertainty, and recommendation.
+
+A strong statistical analysis therefore forms a traceable argument. The engineering question determines the population quantity; the study design determines which comparisons are valid; the data audit and plots reveal what was actually observed; the statistical method quantifies magnitude and uncertainty; and the conclusion states what the evidence supports, what it does not support, and which decision remains reasonable.

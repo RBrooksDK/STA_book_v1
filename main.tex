@@ -32,6 +32,11 @@
   #1
 }
 
+% Full-book builds create clickable chapter references. During a single-
+% chapter working build, main.tex temporarily redefines this command to show
+% the correct chapter number without loading the other chapter files.
+\newcommand{\bookchapterref}[2]{\autoref{#2}}
+
 \title{Statistics and Data Analysis for Engineers}
 \subtitle{A Theory-First Introduction with Worked Examples}
 \author{Richard Brooks}

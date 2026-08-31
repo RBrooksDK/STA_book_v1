@@ -34,9 +34,9 @@ changes book content.
 
 ## Status
 
-Chapters 1 and 2 are complete as first reviewed theory drafts with worked
-engineering examples. The remaining chapters are being developed
-and reviewed in four waves: 1–3, 4–6, 7–9, and 10–12.
+All twelve chapters are complete as reviewed theory drafts with worked
+engineering examples. The published PDF may continue to receive corrections,
+clarifications, and layout refinements during the course.
 
 ## Author
 
