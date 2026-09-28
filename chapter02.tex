@@ -470,13 +470,13 @@ P(A \mid B) = \frac{P(A \cap B)}{P(B)}, \qquad P(B) > 0
 
 Here is the intuition behind the formula. When we know that event \( B \) has occurred, we effectively eliminate all outcomes that are not part of \( B \). This reduction transforms our original sample space into the subset \( B \).
 
-Within this new, restricted sample space \( B \), the only way for event \( A \) to occur is if the outcome lies in the intersection of \( A \) and \( B \), denoted by \( A \cap B \). To determine the conditional probability \( P(A \mid B) \), we calculate the ratio of the probability of both \( A \) and \( B \) occurring to the probability of \( B \) occurring alone. Mathematically, this is expressed as:
+Within this new, restricted sample space \( B \), the only way for event \( A \) to occur is if the outcome lies in the intersection of \( A \) and \( B \), denoted by \( A \cap B \). To determine the conditional probability \( P(A \mid B) \), we calculate the ratio of the probability of both \( A \) and \( B \) occurring to the probability of \( B \). Mathematically, this is expressed as:
 
 \[
 P(A \mid B) = \frac{P(A \cap B)}{P(B)}
 \]
 
-This formulation ensures that the probabilities within the new sample space \( B \) are normalized, meaning the total probability sums to 1. For instance, consider the conditional probability of \( B \) given \( B \):
+This formulation ensures that the probabilities within the new sample space \( B \) are normalized, meaning the total probability sums to 1. For any event \( B \) with \( P(B)>0 \), consider the conditional probability of \( B \) given \( B \):
 
 \[
 P(B \mid B) = \frac{P(B \cap B)}{P(B)} = \frac{P(B)}{P(B)} = 1
@@ -486,21 +486,22 @@ This result intuitively confirms that if \( B \) has occurred, the probability o
 
 Note that the elementary formula for \( P(A \mid B) \) is undefined when \( P(B) = 0 \), because it would require division by zero. A probability-zero event need not be empty in a continuous probability model, but conditioning on such events requires more advanced definitions beyond the scope of this chapter.
 
-We can also formulate the axioms of probability in terms of conditional probability. The axioms of probability are as follows:
+For a fixed conditioning event \( B \) with \( P(B)>0 \), the conditional probability measure \(P(\,\cdot \mid B)\) satisfies the following axioms:
 
 \begin{axiom}[Axioms of Conditional Probability]
     \begin{itemize}
         \item \textbf{Axiom 1:} For any event \(A\), \( 0 \leq P(A\mid B) \leq 1 \).
         \item \textbf{Axiom 2:} Conditional probability of $B$ given $B$ is 1, i.e., $P(B \mid B)=1$.
-        \item \textbf{Axiom 3:} If \(A_1, A_2, A_3, \cdots\) are disjoint events, then
+        \item \textbf{Axiom 3:} If \(A_1, A_2, A_3, \cdots\) are pairwise disjoint events, then
 
-        \hspace*{2.8em}$P\left(A_1 \cup A_2 \cup A_3 \cdots \mid B\right)=P\left(A_1 \mid B\right)+P\left(A_2 \mid B\right)+P\left(A_3 \mid B\right)+\cdots$
+        \hspace*{2.8em}$P\left(A_1 \cup A_2 \cup A_3 \cup \cdots \mid B\right)=P\left(A_1 \mid B\right)+P\left(A_2 \mid B\right)+P\left(A_3 \mid B\right)+\cdots$
     \end{itemize}
 \end{axiom}
 
 And we are also able to derive other rules of conditional probability from these axioms:
 
 \begin{theorem}{Rules of Conditional Probability}
+    For any events \(A\), \(B\), and \(C\) with \(P(C)>0\):
     \begin{itemize}
         \item \textbf{Complement Rule:} The probability of the complement of event $A$ given $C$ is
 
@@ -748,7 +749,7 @@ A company has implemented a two-layer security system to protect against network
 \leavevmode\end{solution}
 
 \begin{remark}
-    It might seem intuitive to some to calculate the joint probability of detection using $P(A \cap B)=P(A) \cdot P(B)=0.4 \cdot 0.6=0.24$. However, this approach ignores the fact that the probability of detection by the IDS depends on the outcome of the Firewall. This is why we use the conditional probability $P(B \mid A)$, which properly accounts for the dependency between the two layers, yielding the correct result of 0.32.
+    It might seem intuitive to some to calculate the joint probability of detection using $P(A \cap B)=P(A) \cdot P(B \mid A^c)=0.4 \cdot 0.6=0.24$. However, $P(B \mid A^c)$ is the probability that the IDS detects the breach given that the Firewall did not detect it; it is neither $P(B)$ nor $P(B \mid A)$. For both layers to detect the breach, we must use $P(B \mid A)$, which properly accounts for the dependency between the two layers and yields the correct result of 0.32.
 \end{remark}
 
 In some scenarios, the probability of an event depends on various conditions. By knowing the conditional probabilities under these different scenarios, we can determine the overall probability of the event. For instance, consider semiconductor manufacturing, where we define:
@@ -758,16 +759,16 @@ In some scenarios, the probability of an event depends on various conditions. By
 \end{itemize}
 The probability of failure for a non-contaminated chip is \( P(B \mid A^c) = 0.005 \). On the other hand, if the chip is subjected to high levels of contamination, the probability of failure is \( P(B \mid A) = 0.10 \). Suppose that in a given production run, \( 20\% \) of the chips are highly contaminated (\( P(A) = 0.20 \)). What is the probability that a product using one of these chips fails?
 
-The probability of failure depends on whether the chip was exposed to high contamination or not. For any event \( A \), it can be decomposed into two mutually exclusive parts: one that intersects with \( B \) and another that intersects with the complement \( B^c \). Mathematically, we can express this as:
+The event \( B \) can be decomposed according to whether the chip was exposed to high contamination or not. Its two mutually exclusive parts are the events \( A \cap B \) and \( A^c \cap B \). Mathematically, we can express this as:
 
 \[
-A = (B \cap A) \cup (B^c \cap A)
+B = (A \cap B) \cup (A^c \cap B)
 \]
 
-This decomposition is visualized in the Venn diagram in \autoref{fig:decoA}. Since \( B \) and \( B^c \) are mutually exclusive, their intersections with \( A \) are also mutually exclusive. Thus, using the rule for the probability of the union of mutually exclusive events and the multiplication rule, we can derive the total probability as follows:
+This decomposition is visualized in the Venn diagram in \autoref{fig:decoA}. Since \( A \) and \( A^c \) are mutually exclusive, their intersections with \( B \) are also mutually exclusive. Thus, using the rule for the probability of the union of mutually exclusive events and the multiplication rule, we can derive the total probability as follows:
 
 \[
-P(A) = P(A \cap B) + P(A \cap B^c)
+P(B) = P(B \cap A) + P(B \cap A^c)
 \]
 
 % Definition of ellipses
@@ -795,25 +796,25 @@ P(A) = P(A \cap B) + P(A \cap B^c)
         \begin{scope}
             \fill[filled] \firstellipse;
             \end{scope}
-            \draw[outline] \firstellipse node[anchor=north west, xshift=2.5cm, yshift=-1.8cm] {$A$} node[anchor=north west, xshift=1.5cm, yshift=0.2cm] {$A \cap B^c$} node[anchor=north west, xshift=-4.2cm, yshift=2.8cm] {$B$} node[anchor=north west, xshift=-3cm, yshift=0.2cm] {$A \cap B$} node[anchor=north west, xshift=3.7cm, yshift=2.8cm] {$B^c$};
+            \draw[outline] \firstellipse node[anchor=north west, xshift=2.5cm, yshift=-1.8cm] {$B$} node[anchor=north west, xshift=1.5cm, yshift=0.2cm] {$A^c \cap B$} node[anchor=north west, xshift=-4.2cm, yshift=2.8cm] {$A$} node[anchor=north west, xshift=-3cm, yshift=0.2cm] {$A \cap B$} node[anchor=north west, xshift=3.7cm, yshift=2.8cm] {$A^c$};
 
          % Draw a squiggly line down the middle of the rectangle
          \draw[decorate, decoration={snake, amplitude=0.05cm, segment length=1cm, post length=0.5cm}] (3,4) -- (3,-2);
         \end{tikzpicture}
-        \caption{$P(A)=P(A \cap B)+P(A \cap B^c)$}
+        \caption{$P(B)=P(B \cap A)+P(B \cap A^c)$}
         \label{fig:decoA}
 \end{figure}
 
 We summarise this in the following theorem:
 
 \begin{theorem}[Law of Total Probability]
-For any events \( A \) and \( B \) such that \( B \) and \( B^c \) form a partition of the sample space \( S \), the total probability of event \( A \) is given by:
+For any events \( A \) and \( B \) with \(0<P(B)<1\), the total probability of event \( A \) is given by:
     \begin{align*}
     P(A) &= P(A \cap B) + P(A \cap B^c) \\
     &= P(B) P(A \mid B) + P(B^c) P(A \mid B^c)
     \end{align*}
 
-    For any event \( A \) and any partition of the sample space \( B_1, B_2, \ldots, B_n \) such that \( B_i \cap B_j = \emptyset \) for all \( i \neq j \) and \( \bigcup_{i=1}^{n} B_i = S \), the total probability of event \( A \) is given by:
+    For any event \( A \) and any finite partition \(B_1, B_2, \ldots, B_n\) of the sample space \(S\), with \(P(B_i)>0\) for every \(i\), the total probability of event \( A \) is given by:
     \begin{align*}
     P(A) &= \sum_{i=1}^{n} P(A \mid B_i) P(B_i)
     \end{align*}
@@ -841,8 +842,7 @@ Let us consider some examples.
     Therefore, the probability that a randomly selected product is defective is 0.07.
 \leavevmode\end{solution}
 
-A graphical display of partitioning an event B
-among a collection of mutually exclusive and exhaustive events is shown in \autoref{fig:decoAmulB}. The event A is partitioned into five mutually exclusive events \( B_1, B_2, B_3, B_4, B_5 \), which together form the sample space \( S \). The total probability of event A is calculated as the sum of the conditional probabilities of A given each partition \( B_i \) multiplied by the probability of each partition \( P(B_i) \).
+A graphical display of a partition of the sample space into mutually exclusive and exhaustive events is shown in \autoref{fig:decoAmulB}. The events \( B_1, B_2, B_3, B_4, B_5 \) partition the sample space \( S \). The total probability of event \( A \) is calculated as the sum, over the partition elements, of the conditional probability of \(A\) given \(B_i\) multiplied by \(P(B_i)\).
 
 \begin{figure}[htbp]
     \centering
@@ -921,7 +921,7 @@ If $A$ and $B$ are independent then
 \end{itemize}
 \end{lemma}
 
-When dealing with the probability of the union of multiple independent events, \( A_1, A_2, \ldots, A_n \), it is often easier to find the probability of their intersection than their union. In these situations, De Morgan's Law can be quite useful:
+When dealing with the probability of the union of multiple mutually independent events, \( A_1, A_2, \ldots, A_n \), it is often easier to find the probability of their intersection than their union. In these situations, De Morgan's Law can be quite useful:
 
 \[
 A_1 \cup A_2 \cup \cdots \cup A_n = \left(A_1^c \cap A_2^c \cap \cdots \cap A_n^c\right)^c
@@ -931,13 +931,13 @@ Using this relationship, we can express the probability of the union as:
 
 \begin{align*}
 P\left(A_1 \cup A_2 \cup \cdots \cup A_n\right) &= 1 - P\left(A_1^c \cap A_2^c \cap \cdots \cap A_n^c\right) \\
-&= 1 - P\left(A_1^c\right) P\left(A_2^c\right) \cdots P\left(A_n^c\right) \quad \text{(since the \( A_i \)'s are independent)} \\
+&= 1 - P\left(A_1^c\right) P\left(A_2^c\right) \cdots P\left(A_n^c\right) \quad \text{(since the \( A_i \)'s are mutually independent)} \\
 &= 1 - \left(1 - P\left(A_1\right)\right)\left(1 - P\left(A_2\right)\right) \cdots \left(1 - P\left(A_n\right)\right).
 \end{align*}
 
 
 \begin{theorem}[Independence and DeMorgan's Law]
-        If \( A_1, A_2, \cdots, A_n \) are independent then
+        If \( A_1, A_2, \cdots, A_n \) are mutually independent then
         \begin{align*}
         &P\left(A_1 \cup A_2 \cup \cdots \cup A_n\right)=1-\left(1-P\left(A_1\right)\right)\left(1-P\left(A_2\right)\right) \cdots\left(1-P\left(A_n\right)\right)
         \end{align*}
@@ -969,7 +969,7 @@ P\left(A_1 \cup A_2 \cup \cdots \cup A_n\right) &= 1 - P\left(A_1^c \cap A_2^c \
     \label{tab:disjoint_vs_independent}
 \end{table}
 
-We can extend the concept of independence to multiple events. A set of events \( A_1, A_2, \ldots, A_n \) are considered independent if the occurrence of any subset of these events does not provide any information about the occurrence of the other events. Mathematically, this is expressed as:
+We can extend the concept of independence to multiple events. A collection of events \( A_1, A_2, \ldots, A_n \) is mutually independent if the occurrence of any subset of these events does not provide any information about the occurrence of the other events. Mathematically, this is expressed as:
 
 \begin{definition}[Independence of Multiple Events]
     Events \( A_1, A_2, \ldots, A_k \) are mutually independent if, for every subset \(J\subseteq\{1,\ldots,k\}\) containing at least two indices,
