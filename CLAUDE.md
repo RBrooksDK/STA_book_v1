@@ -19,7 +19,7 @@ LaTeX-kilden til STA1-bogen (engelsk, version 0.1). Bogen og kursussiden `C:\Git
 
 ## Opbygning
 
-- `chapter01.tex`–`chapter12.tex` (Descriptive Statistics … Planning and Reporting a Statistical Analysis) og `appendixA.tex`. Kapitel 9 er Analysis of Variance.
+- `chapter01.tex`–`chapter12.tex` (Descriptive Statistics … Planning and Reporting a Statistical Analysis) og `appendixA.tex`. Kapitel 9 er Analysis of Variance; ANOVA skal fremadrettet ud af STA1, men kapitlet fjernes kun efter aftale og i takt med kursussiden.
 - `stacolors.tex` definerer farverne (`staViaBlue` #6CA2C6, `staOrange`, `staDarkText` m.fl.), som matcher kursussiden.
 - Forsiden er en vektorforside defineret i `main.tex`, ikke et billede.
 - `code/` indeholder reproducerbare scripts til figurer, tabeller og simuleringer (faste seeds, `np.random.default_rng(seed)`). Figurer gemmes i `figure/`.
